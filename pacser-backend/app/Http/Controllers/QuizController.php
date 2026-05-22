@@ -12,13 +12,16 @@ class QuizController extends Controller
     public function getQuestions(Request $request, $id)
     {
         $user = $request->user();
-        if ($user->energy <= 0) {
-            return response()->json(['message' => 'Out of energy!'], 403);
+        
+        // Admin accounts bypass the energy system completely
+        if ($user->role !== 'admin') {
+            if ($user->energy <= 0) {
+                return response()->json(['message' => 'Out of energy!'], 403);
+            }
+            // Deduct energy when they start the quiz
+            $user->energy -= 1;
+            $user->save();
         }
-
-        // Deduct energy when they start the quiz
-        $user->energy -= 1;
-        $user->save();
 
         $quizSet = QuizSet::findOrFail($id);
         

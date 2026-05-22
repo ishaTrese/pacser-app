@@ -73,7 +73,7 @@ export default function QuizResults() {
               Back to Subjects
             </button>
             <button 
-              onClick={() => navigate(`/quiz/${quizSetId}`)}
+              onClick={() => navigate(`/quiz/${quizSetId}`, { state: { subjectId: location.state?.subjectId } })}
               className="px-8 py-3.5 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all"
             >
               Retry Quiz

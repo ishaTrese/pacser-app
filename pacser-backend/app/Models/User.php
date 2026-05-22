@@ -32,6 +32,7 @@ class User extends Authenticatable
         'max_energy',
         'streak',
         'last_login_date',
+        'role',
     ];
 
     /**

@@ -23,7 +23,7 @@ export default function SubjectQuiz() {
 
   // Fallback info if we navigated directly without state
   const quizTitle = location.state?.title || `Quiz Set ${quizSetId}`;
-  const subjectId = location.state?.subjectId || 'mathematics';
+  const resolvedSubjectId = String(location.state?.subjectId || 'mathematics');
 
   useEffect(() => {
     api.get(`/quiz-sets/${quizSetId}/questions`)
@@ -31,7 +31,7 @@ export default function SubjectQuiz() {
         setQuizSet(response.data.quiz_set);
         
         // Sync the local energy drop
-        if (user && user.energy > 0) {
+        if (user && user.role !== 'admin' && user.energy > 0) {
           updateUserStats({ energy: user.energy - 1 });
         }
 
@@ -134,7 +134,7 @@ export default function SubjectQuiz() {
       // Post score to backend
       api.post('/quiz/submit', {
         quiz_set_id: quizSetId,
-        score: score + (selectedOption === currentQuestion.correct_answer ? 1 : 0), // Include last question score if correct
+        score: score, // Removed duplicate addition here!
         total: questions.length
       }).then((res) => {
         if (user) {
@@ -149,13 +149,14 @@ export default function SubjectQuiz() {
             total: res.data.log.total,
             percentage: res.data.log.percentage,
             xp_gained: res.data.xp_gained,
-            points_gained: res.data.points_gained
+            points_gained: res.data.points_gained,
+            subjectId: resolvedSubjectId // Pass string slug to results so Retry works
           } 
         });
       }).catch(err => {
         console.error("Error submitting quiz", err);
         // Fallback navigation if offline or error
-        navigate(`/quiz/${quizSetId}/results`, { state: { score, total: questions.length } });
+        navigate(`/quiz/${quizSetId}/results`, { state: { score, total: questions.length, subjectId: resolvedSubjectId } });
       });
     }
   };
@@ -170,7 +171,7 @@ export default function SubjectQuiz() {
         
         <Breadcrumb items={[
           { label: 'Learn', path: '/learn' },
-          { label: subjectId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), path: `/learn/${subjectId}` },
+          { label: resolvedSubjectId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), path: `/learn/${resolvedSubjectId}` },
           { label: quizTitle }
         ]} />
 
