@@ -4,11 +4,13 @@ import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/layout/Breadcrumb';
 import { Zap, CheckCircle2, XCircle } from 'lucide-react';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 export default function SubjectQuiz() {
   const { quizSetId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, updateUserStats } = useAuth();
   
   const [questions, setQuestions] = useState([]);
   const [quizSet, setQuizSet] = useState(null);
@@ -17,6 +19,7 @@ export default function SubjectQuiz() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [outOfEnergy, setOutOfEnergy] = useState(false);
 
   // Fallback info if we navigated directly without state
   const quizTitle = location.state?.title || `Quiz Set ${quizSetId}`;
@@ -27,6 +30,11 @@ export default function SubjectQuiz() {
       .then(response => {
         setQuizSet(response.data.quiz_set);
         
+        // Sync the local energy drop
+        if (user && user.energy > 0) {
+          updateUserStats({ energy: user.energy - 1 });
+        }
+
         // Map backend questions to frontend format
         const formattedQuestions = response.data.questions.map(q => ({
           id: q.id,
@@ -42,9 +50,42 @@ export default function SubjectQuiz() {
 
         setQuestions(formattedQuestions);
       })
-      .catch(error => console.error("Error fetching questions:", error))
+      .catch(error => {
+        if (error.response?.status === 403) {
+          setOutOfEnergy(true);
+        } else {
+          console.error("Error fetching questions:", error);
+        }
+      })
       .finally(() => setLoading(false));
   }, [quizSetId]);
+
+  if (outOfEnergy) {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+        <Navbar />
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center shadow-lg">
+            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Zap size={32} className="text-yellow-500 fill-current" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-4">Out of Energy!</h2>
+            <p className="text-slate-600 mb-8 leading-relaxed">
+              You've used up all your energy for today. Wait for the daily reset or purchase an Energy Refill from the Shop.
+            </p>
+            <div className="space-y-3">
+              <button onClick={() => navigate('/shop')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-md">
+                Visit Shop
+              </button>
+              <button onClick={() => navigate('/dashboard')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all">
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -96,11 +137,19 @@ export default function SubjectQuiz() {
         score: score + (selectedOption === currentQuestion.correct_answer ? 1 : 0), // Include last question score if correct
         total: questions.length
       }).then((res) => {
+        if (user) {
+          updateUserStats({
+            xp: user.xp + res.data.xp_gained,
+            points: user.points + res.data.points_gained
+          });
+        }
         navigate(`/quiz/${quizSetId}/results`, { 
           state: { 
             score: res.data.log.score, 
             total: res.data.log.total,
-            percentage: res.data.log.percentage 
+            percentage: res.data.log.percentage,
+            xp_gained: res.data.xp_gained,
+            points_gained: res.data.points_gained
           } 
         });
       }).catch(err => {
@@ -133,7 +182,9 @@ export default function SubjectQuiz() {
           
           <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 px-4 py-2 rounded-full shadow-sm">
             <Zap size={16} className="text-yellow-500 fill-current" />
-            <span className="text-yellow-600 font-black text-sm tracking-wider">12 / 20 Energy</span>
+            <span className="text-yellow-600 font-black text-sm tracking-wider">
+              {user ? `${user.energy} / ${user.max_energy}` : '-- / --'} Energy
+            </span>
           </div>
         </div>
 

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthContext';
 
 export default function Shop() {
   const [activeTab, setActiveTab] = useState('Perks');
-  const availablePoints = 0;
+  const { user } = useAuth();
+  const availablePoints = user?.points || 0;
 
   const missions = [
     { title: 'Complete 3 Lessons', current: 0, total: 3, reward: '+50 pts' },

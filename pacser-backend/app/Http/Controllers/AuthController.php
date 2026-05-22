@@ -48,6 +48,25 @@ class AuthController extends Controller
         }
 
         $user  = Auth::user();
+
+        // Gamification Logic: Daily Streak & Energy Refill
+        $today = now()->startOfDay();
+        $lastLogin = $user->last_login_date ? \Carbon\Carbon::parse($user->last_login_date)->startOfDay() : null;
+
+        if (!$lastLogin || $lastLogin->lessThan($today)) {
+            // Refill energy for the new day
+            $user->energy = $user->max_energy;
+
+            if ($lastLogin && $lastLogin->diffInDays($today) === 1) {
+                $user->streak += 1;
+            } else {
+                $user->streak = 1;
+            }
+
+            $user->last_login_date = $today->toDateString();
+            $user->save();
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

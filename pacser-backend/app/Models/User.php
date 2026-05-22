@@ -26,6 +26,12 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
+        'xp',
+        'points',
+        'energy',
+        'max_energy',
+        'streak',
+        'last_login_date',
     ];
 
     /**

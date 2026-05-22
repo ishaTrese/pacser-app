@@ -82,7 +82,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Current Streak</p>
-              <p className="text-slate-900 font-extrabold text-2xl">0 Days</p>
+              <p className="text-slate-900 font-extrabold text-2xl">{user?.streak || 0} Days</p>
             </div>
           </div>
           
@@ -92,7 +92,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total XP</p>
-              <p className="text-slate-900 font-extrabold text-2xl">0 XP</p>
+              <p className="text-slate-900 font-extrabold text-2xl">{user?.xp || 0} XP</p>
             </div>
           </div>
 
@@ -108,11 +108,14 @@ export default function Dashboard() {
 
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-center hover:border-blue-200 transition-colors">
             <div className="flex justify-between items-center mb-2">
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Level 1</p>
-              <p className="text-blue-600 text-xs font-black">0%</p>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Level {Math.floor((user?.xp || 0) / 100) + 1}</p>
+              <p className="text-blue-600 text-xs font-black">{(user?.xp || 0) % 100}%</p>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div className="bg-blue-600 h-2.5 rounded-full w-0 transition-all"></div>
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-out" 
+                style={{ width: `${(user?.xp || 0) % 100}%` }}
+              ></div>
             </div>
           </div>
         </div>

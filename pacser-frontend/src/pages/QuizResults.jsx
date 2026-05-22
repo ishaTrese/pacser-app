@@ -44,7 +44,18 @@ export default function QuizResults() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-4xl font-black text-slate-900 tracking-tighter">{percentage}%</span>
-              <span className="text-sm font-bold text-slate-400 mt-1">{score} / {total} XP</span>
+              <span className="text-sm font-bold text-slate-400 mt-1">{score} / {total} Correct</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-6 mb-8">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl px-5 py-3 text-center">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Earned XP</p>
+              <p className="text-blue-600 font-black text-xl">+{location.state?.xp_gained || 0}</p>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-100 rounded-xl px-5 py-3 text-center">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Earned Points</p>
+              <p className="text-yellow-600 font-black text-xl">+{location.state?.points_gained || 0}</p>
             </div>
           </div>
 
