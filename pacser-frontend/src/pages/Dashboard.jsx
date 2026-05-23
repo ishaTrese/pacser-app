@@ -1,8 +1,10 @@
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/layout/Navbar'
 import Breadcrumb from '../components/layout/Breadcrumb'
 import { Flame, BookOpen, Medal, Target, ChevronRight, PenTool, Scale, Shield, BookText } from 'lucide-react'
+import api from '../api/axios'
 
 const SUBJECTS = [
   {
@@ -48,8 +50,20 @@ const SUBJECTS = [
 ]
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, updateUserStats } = useAuth()
   const navigate = useNavigate()
+  const [stats, setStats] = useState({ quiz_sets_done: 0, mastery: {} })
+
+  useEffect(() => {
+    api.get('/dashboard/stats')
+      .then(res => {
+        setStats({ quiz_sets_done: res.data.quiz_sets_done, mastery: res.data.mastery })
+        if (res.data.user) {
+          updateUserStats(res.data.user) // Refresh global user object
+        }
+      })
+      .catch(err => console.error("Failed to load dashboard stats", err))
+  }, [])
 
   const displayName = user ? `${user.first_name} ${user.last_name}` : 'Anna Doe'
 
@@ -102,7 +116,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Quiz Sets</p>
-              <p className="text-slate-900 font-extrabold text-2xl">0 Done</p>
+              <p className="text-slate-900 font-extrabold text-2xl">{stats.quiz_sets_done} Done</p>
             </div>
           </div>
 
@@ -125,7 +139,9 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-slate-900 mb-4 px-1 tracking-tight">Reviewer Subjects</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SUBJECTS.map((subject) => (
+            {SUBJECTS.map((subject) => {
+              const subjectMastery = stats.mastery[subject.id] || 0;
+              return (
               <div 
                 key={subject.id}
                 onClick={() => navigate(`/learn/${subject.id}`)}
@@ -135,7 +151,7 @@ export default function Dashboard() {
                   <div className={`w-14 h-14 rounded-xl ${subject.color} ${subject.borderColor} border flex items-center justify-center`}>
                     {subject.icon}
                   </div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-3 py-1 rounded-full">0% Mastery</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-3 py-1 rounded-full">{subjectMastery}% Mastery</span>
                 </div>
                 
                 <h3 className="font-bold text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">
@@ -145,7 +161,7 @@ export default function Dashboard() {
                   {subject.description}
                 </p>
               </div>
-            ))}
+            )})}
           </div>
         </div>
 

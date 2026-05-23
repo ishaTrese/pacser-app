@@ -62,6 +62,11 @@ class QuizController extends Controller
         $xpGained = ($validated['score'] * 10) + ($percentage == 100 ? 20 : 0);
         $pointsGained = $validated['score'] * 5;
 
+        // Apply Double XP Boost if active
+        if ($user->double_xp_until && \Carbon\Carbon::parse($user->double_xp_until)->isFuture()) {
+            $xpGained *= 2;
+        }
+
         $user->xp += $xpGained;
         $user->points += $pointsGained;
         $user->save();

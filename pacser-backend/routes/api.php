@@ -20,6 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/quiz-sets/{id}/questions', [\App\Http\Controllers\QuizController::class, 'getQuestions']);
     Route::post('/quiz/submit', [\App\Http\Controllers\QuizController::class, 'submitQuiz']);
 
+    // Dashboard Stats
+    Route::get('/dashboard/stats', [\App\Http\Controllers\DashboardController::class, 'stats']);
+
     // Leaderboard
     Route::get('/leaderboard', [\App\Http\Controllers\LeaderboardController::class, 'index']);
 
