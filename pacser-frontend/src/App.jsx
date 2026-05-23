@@ -15,6 +15,9 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import SubjectQuiz from './pages/SubjectQuiz'
 import QuizResults from './pages/QuizResults'
+import PreTest from './pages/PreTest'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminQuestionForm from './pages/admin/AdminQuestionForm'
 import AdminGodMode from './components/admin/AdminGodMode'
 
 function PlaceholderPage({ title }) {
@@ -107,6 +110,32 @@ function App() {
             element={(
               <ProtectedRoute>
                 <Contact />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/admin/question/:id"
+            element={(
+              <ProtectedRoute>
+                <AdminQuestionForm />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route
+            path="/pretest"
+            element={(
+              <ProtectedRoute>
+                <PreTest />
               </ProtectedRoute>
             )}
           />

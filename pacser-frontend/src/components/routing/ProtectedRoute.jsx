@@ -13,6 +13,10 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />
   }
 
+  if (!user.pretest_completed && location.pathname !== '/pretest') {
+    return <Navigate to="/pretest" replace />
+  }
+
   return children
 }
 

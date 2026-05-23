@@ -34,4 +34,104 @@ class AdminController extends Controller
             'user' => $user
         ]);
     }
+
+    public function stats(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'total_users' => \App\Models\User::count(),
+            'total_questions' => \App\Models\Question::count(),
+            'total_quiz_sets' => \App\Models\QuizSet::count(),
+        ]);
+    }
+
+    public function getQuestions(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $questions = \App\Models\Question::with('answers', 'quizSet.subject')->orderBy('id', 'desc')->get();
+        
+        return response()->json([
+            'questions' => $questions
+        ]);
+    }
+
+    public function createQuestion(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'quiz_set_id' => 'required|exists:quiz_sets,id',
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'is_pretest' => 'boolean',
+            'answers' => 'required|array|min:2',
+            'answers.*.answer_text' => 'required|string',
+            'answers.*.is_correct' => 'required|boolean',
+        ]);
+
+        $question = \App\Models\Question::create([
+            'quiz_set_id' => $validated['quiz_set_id'],
+            'question_text' => $validated['question_text'],
+            'explanation' => $validated['explanation'],
+            'is_pretest' => $validated['is_pretest'] ?? false,
+        ]);
+
+        foreach ($validated['answers'] as $ans) {
+            \App\Models\Answer::create([
+                'question_id' => $question->id,
+                'answer_text' => $ans['answer_text'],
+                'is_correct' => $ans['is_correct'],
+            ]);
+        }
+
+        return response()->json(['message' => 'Question created successfully', 'question' => $question]);
+    }
+
+    public function updateQuestion(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'quiz_set_id' => 'required|exists:quiz_sets,id',
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'is_pretest' => 'boolean',
+            'answers' => 'required|array|min:2',
+            'answers.*.id' => 'nullable|exists:answers,id',
+            'answers.*.answer_text' => 'required|string',
+            'answers.*.is_correct' => 'required|boolean',
+        ]);
+
+        $question = \App\Models\Question::findOrFail($id);
+        $question->update([
+            'quiz_set_id' => $validated['quiz_set_id'],
+            'question_text' => $validated['question_text'],
+            'explanation' => $validated['explanation'],
+            'is_pretest' => $validated['is_pretest'] ?? false,
+        ]);
+
+        // Replace answers entirely or update them
+        // For simplicity, delete old and recreate to avoid orphans if answers were removed
+        $question->answers()->delete();
+
+        foreach ($validated['answers'] as $ans) {
+            \App\Models\Answer::create([
+                'question_id' => $question->id,
+                'answer_text' => $ans['answer_text'],
+                'is_correct' => $ans['is_correct'],
+            ]);
+        }
+
+        return response()->json(['message' => 'Question updated successfully', 'question' => $question]);
+    }
 }

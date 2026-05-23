@@ -20,6 +20,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/quiz-sets/{id}/questions', [\App\Http\Controllers\QuizController::class, 'getQuestions']);
     Route::post('/quiz/submit', [\App\Http\Controllers\QuizController::class, 'submitQuiz']);
 
+    // Pretest
+    Route::get('/pretest/questions', [\App\Http\Controllers\PretestController::class, 'getQuestions']);
+    Route::post('/pretest/submit', [\App\Http\Controllers\PretestController::class, 'submit']);
+
     // Dashboard Stats
     Route::get('/dashboard/stats', [\App\Http\Controllers\DashboardController::class, 'stats']);
 
@@ -30,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shop/purchase', [\App\Http\Controllers\ShopController::class, 'purchase']);
     Route::post('/shop/activate', [\App\Http\Controllers\ShopController::class, 'activate']);
 
-    // Admin God Mode
+    // Admin God Mode & Content Management
     Route::post('/admin/god-mode', [\App\Http\Controllers\AdminController::class, 'godModeUpdate']);
+    Route::get('/admin/stats', [\App\Http\Controllers\AdminController::class, 'stats']);
+    Route::get('/admin/questions', [\App\Http\Controllers\AdminController::class, 'getQuestions']);
+    Route::post('/admin/questions', [\App\Http\Controllers\AdminController::class, 'createQuestion']);
+    Route::put('/admin/questions/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuestion']);
 });
