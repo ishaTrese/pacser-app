@@ -88,6 +88,29 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Active Perks Indicator */}
+        {(user?.streak_freeze_active || (user?.double_xp_until && new Date(user.double_xp_until) > new Date())) && (
+          <div className="flex gap-4 mb-2">
+            {user?.streak_freeze_active && (
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg px-4 py-2 flex items-center gap-3 shadow-sm">
+                <div className="bg-yellow-100 p-1.5 rounded-full">
+                  <Shield size={16} className="text-yellow-600" />
+                </div>
+                <span className="text-yellow-800 font-bold text-sm tracking-tight">Streak Freeze Active</span>
+              </div>
+            )}
+            
+            {(user?.double_xp_until && new Date(user.double_xp_until) > new Date()) && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-3 shadow-sm">
+                <div className="bg-blue-100 p-1.5 rounded-full animate-pulse">
+                  <Flame size={16} className="text-blue-600" />
+                </div>
+                <span className="text-blue-800 font-bold text-sm tracking-tight">Double XP Active</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Top Metric Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:border-yellow-100 transition-colors">

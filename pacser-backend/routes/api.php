@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Shop
     Route::post('/shop/purchase', [\App\Http\Controllers\ShopController::class, 'purchase']);
+    Route::post('/shop/activate', [\App\Http\Controllers\ShopController::class, 'activate']);
 
     // Admin God Mode
     Route::post('/admin/god-mode', [\App\Http\Controllers\AdminController::class, 'godModeUpdate']);

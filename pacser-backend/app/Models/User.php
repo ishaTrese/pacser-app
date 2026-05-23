@@ -34,7 +34,11 @@ class User extends Authenticatable
         'last_login_date',
         'role',
         'double_xp_until',
-        'streak_freezes',
+        'inventory_double_xp',
+        'inventory_streak_freezes',
+        'inventory_energy_refills',
+        'inventory_energy_plus_one',
+        'streak_freeze_active',
     ];
 
     /**

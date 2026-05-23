@@ -30,9 +30,20 @@ export default function Shop() {
       if (res.data.user) {
         updateUserStats(res.data.user);
       }
-      alert('Purchase successful!');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to purchase item');
+    }
+  };
+
+  const handleActivate = async (itemId) => {
+    try {
+      const res = await api.post('/shop/activate', { item_id: itemId });
+      if (res.data.user) {
+        updateUserStats(res.data.user);
+      }
+      alert('Perk Activated!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to activate item');
     }
   };
 
@@ -104,22 +115,52 @@ export default function Shop() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {perks.map((perk, idx) => {
                   const canAfford = availablePoints >= perk.cost;
+                  
+                  // Map perk ID to inventory column name in user object
+                  const invKey = 
+                    perk.id === 'double_xp' ? 'inventory_double_xp' :
+                    perk.id === 'streak_freeze' ? 'inventory_streak_freezes' :
+                    perk.id === 'energy_refill' ? 'inventory_energy_refills' :
+                    'inventory_energy_plus_one';
+                  
+                  const ownedCount = user?.[invKey] || 0;
+
                   return (
-                    <div key={idx} className="bg-white border border-slate-200 shadow-sm rounded-xl border border-white/10 p-5 flex flex-col shadow-lg transition-transform hover:-translate-y-1">
+                    <div key={idx} className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 flex flex-col shadow-lg transition-transform hover:-translate-y-1 relative">
+                      {ownedCount > 0 && (
+                        <div className="absolute -top-3 -right-3 bg-green-500 text-white font-black text-xs px-3 py-1 rounded-full shadow-md border-2 border-white z-10">
+                          Owned: {ownedCount}
+                        </div>
+                      )}
                       <h3 className="text-slate-900 font-bold text-lg mb-2">{perk.title}</h3>
                       <p className="text-slate-400 text-sm mb-6">{perk.detail}</p>
-                      <div className="flex justify-between items-center mt-auto pt-2">
-                        <span className="text-blue-600 font-bold text-lg">{perk.cost} pts</span>
+                      
+                      <div className="mt-auto flex flex-col gap-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-blue-600 font-bold text-lg">{perk.cost} pts</span>
+                          <button 
+                            onClick={() => handlePurchase(perk.id)}
+                            className={`px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm ${
+                              canAfford 
+                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' 
+                                : 'bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed'
+                            }`}
+                            disabled={!canAfford}
+                          >
+                            Buy
+                          </button>
+                        </div>
+                        
                         <button 
-                          onClick={() => handlePurchase(perk.id)}
-                          className={`px-5 py-2 rounded font-bold transition-colors shadow-sm ${
-                            canAfford 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                              : 'bg-[#2a3040] text-slate-400 cursor-not-allowed'
+                          onClick={() => handleActivate(perk.id)}
+                          disabled={ownedCount <= 0}
+                          className={`w-full py-2.5 rounded-lg font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
+                            ownedCount > 0
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           }`}
-                          disabled={!canAfford}
                         >
-                          Redeem
+                          Activate
                         </button>
                       </div>
                     </div>
