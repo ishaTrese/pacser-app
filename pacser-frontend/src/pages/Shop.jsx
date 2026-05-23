@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 export default function Shop() {
   const [activeTab, setActiveTab] = useState('Perks');
-  const { user } = useAuth();
+  const { user, updateUserStats } = useAuth();
   const availablePoints = user?.points || 0;
 
   const missions = [
@@ -16,15 +17,24 @@ export default function Shop() {
   ];
 
   const perks = [
-    { title: 'Double XP Boost', detail: '24 hours', cost: 450 },
-    { title: 'Streak Freeze', detail: 'Protect your streak', cost: 150 },
-    { title: 'Energy Refill', detail: 'Full energy restore', cost: 180 },
-    { title: 'Energy', detail: 'One energy restore', cost: 20 },
-    { title: 'Double XP Boost', detail: '24 hours', cost: 450 },
-    { title: 'Streak Freeze', detail: 'Protect your streak', cost: 150 },
-    { title: 'Energy Refill', detail: 'Full energy restore', cost: 180 },
-    { title: 'Energy', detail: 'One energy restore', cost: 20 },
+    { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', cost: 450 },
+    { id: 'streak_freeze', title: 'Streak Freeze', detail: 'Protect your streak', cost: 150 },
+    { id: 'energy_refill', title: 'Energy Refill', detail: 'Full energy restore', cost: 180 },
+    { id: 'energy_plus_one', title: 'Energy', detail: 'One energy restore', cost: 20 },
   ];
+
+  const handlePurchase = async (itemId) => {
+    try {
+      const res = await api.post('/shop/purchase', { item_id: itemId });
+      // Update global user stats (points, energy, etc)
+      if (res.data.user) {
+        updateUserStats(res.data.user);
+      }
+      alert('Purchase successful!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to purchase item');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -101,6 +111,7 @@ export default function Shop() {
                       <div className="flex justify-between items-center mt-auto pt-2">
                         <span className="text-blue-600 font-bold text-lg">{perk.cost} pts</span>
                         <button 
+                          onClick={() => handlePurchase(perk.id)}
                           className={`px-5 py-2 rounded font-bold transition-colors shadow-sm ${
                             canAfford 
                               ? 'bg-blue-600 text-white hover:bg-blue-700' 

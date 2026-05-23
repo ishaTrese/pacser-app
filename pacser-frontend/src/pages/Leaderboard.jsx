@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/layout/Navbar';
 import { Search, Trophy, Medal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 export default function Leaderboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('Weekly');
+  const [activeTab, setActiveTab] = useState('All Time');
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // As requested, the system has no progress yet. 
-  // We provide a clean empty state following HCI best practices.
-  const LEADERBOARD_LIST = []; 
-  
+  useEffect(() => {
+    api.get('/leaderboard')
+      .then(res => setLeaderboard(res.data.leaderboard))
+      .catch(err => console.error("Failed to load leaderboard", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const topThree = leaderboard.slice(0, 3);
+  const theRest = leaderboard.slice(3);
+
+  // Find current user's rank
+  const userRankIndex = leaderboard.findIndex(u => u.id === user?.id);
+  const userRank = userRankIndex >= 0 ? userRankIndex + 1 : '-';
+
   const CURRENT_USER = {
     name: user ? `${user.first_name} ${user.last_name}` : 'Anna Doe',
-    rank: '-',
-    xp: 0,
+    rank: userRank,
+    xp: user?.xp || 0,
   };
 
   return (
@@ -66,10 +79,76 @@ export default function Leaderboard() {
           </div>
 
           {/* List Area */}
-          <div className="flex-1 min-h-[400px] flex flex-col">
-            {LEADERBOARD_LIST.length > 0 ? (
+          <div className="flex-1 min-h-[400px] flex flex-col bg-white">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <span className="text-blue-600 font-bold animate-pulse">Loading rankings...</span>
+              </div>
+            ) : leaderboard.length > 0 ? (
               <div className="flex flex-col">
-                {/* List items would go here */}
+                
+                {/* Podium for Top 3 */}
+                <div className="flex justify-center items-end gap-2 sm:gap-6 pt-12 pb-8 px-4 bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
+                  {/* Rank 2 */}
+                  {topThree[1] && (
+                    <div className="flex flex-col items-center w-24 sm:w-32">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 mb-2 border-2 border-slate-300">
+                        {topThree[1].first_name[0]}{topThree[1].last_name[0]}
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 truncate w-full text-center">{topThree[1].first_name}</p>
+                      <p className="text-xs font-bold text-blue-600 mb-3">{topThree[1].xp} XP</p>
+                      <div className="w-full h-24 bg-slate-200 rounded-t-lg flex justify-center pt-2 border-t border-l border-r border-slate-300 shadow-inner">
+                        <span className="text-2xl font-black text-slate-400">2</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rank 1 */}
+                  {topThree[0] && (
+                    <div className="flex flex-col items-center w-28 sm:w-36 z-10">
+                      <Trophy size={28} className="text-yellow-500 mb-2 fill-current drop-shadow-md" />
+                      <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-700 mb-2 border-4 border-yellow-400 shadow-lg">
+                        {topThree[0].first_name[0]}{topThree[0].last_name[0]}
+                      </div>
+                      <p className="text-base font-bold text-slate-900 truncate w-full text-center">{topThree[0].first_name}</p>
+                      <p className="text-sm font-black text-yellow-600 mb-3">{topThree[0].xp} XP</p>
+                      <div className="w-full h-32 bg-yellow-400 rounded-t-xl flex justify-center pt-2 shadow-inner border-t border-l border-r border-yellow-500">
+                        <span className="text-4xl font-black text-yellow-600 opacity-50 drop-shadow-sm">1</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rank 3 */}
+                  {topThree[2] && (
+                    <div className="flex flex-col items-center w-24 sm:w-32">
+                      <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center font-bold text-orange-800 mb-2 border-2 border-orange-300">
+                        {topThree[2].first_name[0]}{topThree[2].last_name[0]}
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 truncate w-full text-center">{topThree[2].first_name}</p>
+                      <p className="text-xs font-bold text-orange-600 mb-3">{topThree[2].xp} XP</p>
+                      <div className="w-full h-20 bg-orange-200 rounded-t-lg flex justify-center pt-2 border-t border-l border-r border-orange-300 shadow-inner">
+                        <span className="text-2xl font-black text-orange-400">3</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Remaining List */}
+                <div className="flex flex-col">
+                  {theRest.map((u, idx) => (
+                    <div key={u.id} className="flex items-center justify-between p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <span className="w-8 text-center font-bold text-slate-400">{idx + 4}</span>
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">
+                          {u.first_name[0]}{u.last_name[0]}
+                        </div>
+                        <p className="font-bold text-slate-900">{u.first_name} {u.last_name}</p>
+                      </div>
+                      <span className="font-bold text-slate-600">{u.xp} XP</span>
+                    </div>
+                  ))}
+                </div>
+
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">

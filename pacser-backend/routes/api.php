@@ -19,4 +19,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subjects/{slug}/quiz-sets', [\App\Http\Controllers\SubjectController::class, 'getQuizSets']);
     Route::get('/quiz-sets/{id}/questions', [\App\Http\Controllers\QuizController::class, 'getQuestions']);
     Route::post('/quiz/submit', [\App\Http\Controllers\QuizController::class, 'submitQuiz']);
+
+    // Leaderboard
+    Route::get('/leaderboard', [\App\Http\Controllers\LeaderboardController::class, 'index']);
+
+    // Shop
+    Route::post('/shop/purchase', [\App\Http\Controllers\ShopController::class, 'purchase']);
+
+    // Admin God Mode
+    Route::post('/admin/god-mode', [\App\Http\Controllers\AdminController::class, 'godModeUpdate']);
 });

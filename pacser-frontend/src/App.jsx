@@ -15,6 +15,7 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import SubjectQuiz from './pages/SubjectQuiz'
 import QuizResults from './pages/QuizResults'
+import AdminGodMode from './components/admin/AdminGodMode'
 
 function PlaceholderPage({ title }) {
   return (
@@ -112,6 +113,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <AdminGodMode />
       </AuthProvider>
     </BrowserRouter>
   )

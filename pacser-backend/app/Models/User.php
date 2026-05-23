@@ -33,6 +33,8 @@ class User extends Authenticatable
         'streak',
         'last_login_date',
         'role',
+        'double_xp_until',
+        'streak_freezes',
     ];
 
     /**
