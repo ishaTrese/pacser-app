@@ -27,8 +27,8 @@ export default function AdminQuestionForm() {
   });
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
-      navigate('/dashboard');
+    if (user && user.role !== 'admin') {
+      setLoading(false);
       return;
     }
 
@@ -83,6 +83,16 @@ export default function AdminQuestionForm() {
   };
 
   if (loading) return <div className="p-10">Loading...</div>;
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans flex flex-col items-center justify-center">
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-2">403 Forbidden</h1>
+        <p className="text-slate-500 text-lg">You do not have permission to access the admin panel.</p>
+        <Link to="/dashboard" className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Go to Dashboard</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-12">

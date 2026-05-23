@@ -38,10 +38,11 @@ class PretestController extends Controller
 
             // Shuffle answers and map subject info for the frontend
             $questions = $questions->map(function ($q) use ($subject) {
-                $q->subject_slug = $subject->slug;
-                $q->subject_name = $subject->name;
-                $q->subject_id = $subject->id;
-                return $q;
+                $qArr = $q->toArray();
+                $qArr['subject_slug'] = $subject->slug;
+                $qArr['subject_name'] = $subject->name;
+                $qArr['subject_id'] = $subject->id;
+                return $qArr;
             });
 
             $pretestQuestions = $pretestQuestions->concat($questions);

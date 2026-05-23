@@ -13,8 +13,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
-      navigate('/dashboard');
+    if (user && user.role !== 'admin') {
+      setLoading(false);
       return;
     }
 
@@ -36,7 +36,29 @@ export default function AdminDashboard() {
     fetchData();
   }, [user, navigate]);
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this question?')) {
+      try {
+        await api.delete(`/admin/questions/${id}`);
+        setQuestions(questions.filter(q => q.id !== id));
+      } catch (err) {
+        console.error("Failed to delete", err);
+        alert('Failed to delete question');
+      }
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-slate-50 p-10">Loading Admin...</div>;
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans flex flex-col items-center justify-center">
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-2">403 Forbidden</h1>
+        <p className="text-slate-500 text-lg">You do not have permission to access the admin panel.</p>
+        <Link to="/dashboard" className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Go to Dashboard</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -105,10 +127,16 @@ export default function AdminDashboard() {
                     <td className="p-4 text-right">
                       <Link 
                         to={`/admin/question/${q.id}`}
-                        className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
+                        className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 mr-4"
                       >
                         <Edit size={16} /> Edit
                       </Link>
+                      <button 
+                        onClick={() => handleDelete(q.id)}
+                        className="text-red-500 hover:text-red-700 font-medium inline-flex items-center gap-1"
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

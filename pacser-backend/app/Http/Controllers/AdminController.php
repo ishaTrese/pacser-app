@@ -134,4 +134,16 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Question updated successfully', 'question' => $question]);
     }
+
+    public function deleteQuestion(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $question = \App\Models\Question::findOrFail($id);
+        $question->delete();
+
+        return response()->json(['message' => 'Question deleted successfully']);
+    }
 }

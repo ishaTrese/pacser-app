@@ -34,10 +34,10 @@ export default function PreTest() {
       });
   }, [user, navigate]);
 
-  const handleSelect = (questionId, isCorrect, subjectSlug, subjectId) => {
+  const handleSelect = (questionId, answerId, isCorrect, subjectSlug, subjectId) => {
     setAnswers({
       ...answers,
-      [questionId]: { isCorrect, subjectSlug, subjectId }
+      [questionId]: { answerId, isCorrect, subjectSlug, subjectId }
     });
   };
 
@@ -104,13 +104,13 @@ export default function PreTest() {
 
           <div className="space-y-4 mb-8">
             {Object.entries(results).map(([slug, data]) => {
-              const percentage = (data.score / data.total) * 100;
+              const percentage = (data.score / 10) * 100; // Hardcoded out of 10 for display
               return (
                 <div key={slug} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
                   <span className="font-bold text-slate-800 capitalize">{slug.replace(/-/g, ' ')}</span>
                   <div className="flex items-center gap-4">
                     <span className={`font-black ${percentage >= 75 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>
-                      {data.score} / {data.total}
+                      {data.score} / 10
                     </span>
                   </div>
                 </div>
@@ -193,17 +193,17 @@ export default function PreTest() {
             {currentQuestion.answers.map(ans => (
               <button
                 key={ans.id}
-                onClick={() => handleSelect(currentQuestion.id, ans.is_correct, currentQuestion.subject_slug, currentQuestion.subject_id)}
+                onClick={() => handleSelect(currentQuestion.id, ans.id, ans.is_correct, currentQuestion.subject_slug, currentQuestion.subject_id)}
                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all font-medium text-lg flex items-center gap-4 ${
-                  answers[currentQuestion.id]?.isCorrect === ans.is_correct && hasAnswered 
+                  answers[currentQuestion.id]?.answerId === ans.id && hasAnswered 
                     ? 'border-blue-600 bg-blue-50 text-blue-900' 
                     : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                  answers[currentQuestion.id]?.isCorrect === ans.is_correct && hasAnswered ? 'border-blue-600' : 'border-slate-300'
+                  answers[currentQuestion.id]?.answerId === ans.id && hasAnswered ? 'border-blue-600' : 'border-slate-300'
                 }`}>
-                  {answers[currentQuestion.id]?.isCorrect === ans.is_correct && hasAnswered && <div className="w-3 h-3 bg-blue-600 rounded-full" />}
+                  {answers[currentQuestion.id]?.answerId === ans.id && hasAnswered && <div className="w-3 h-3 bg-blue-600 rounded-full" />}
                 </div>
                 {ans.answer_text}
               </button>
