@@ -81,6 +81,36 @@ export default function AdminGodMode() {
         >
           Apply Changes <ChevronRight size={18} />
         </button>
+
+        <button 
+          onClick={async () => {
+            try {
+              const res = await api.post('/admin/god-mode', { remove_double_xp: true });
+              if (res.data.user) updateUserStats(res.data.user);
+              alert('Double XP Perk Removed!');
+            } catch (err) {
+              alert('Failed to remove perk');
+            }
+          }}
+          className="w-full mt-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 font-bold py-2 rounded-lg transition-colors text-sm"
+        >
+          Remove Active Double XP
+        </button>
+
+        <button 
+          onClick={async () => {
+            try {
+              const res = await api.post('/admin/god-mode', { remove_streak_freeze: true });
+              if (res.data.user) updateUserStats(res.data.user);
+              alert('Streak Freeze Perk Removed!');
+            } catch (err) {
+              alert('Failed to remove perk');
+            }
+          }}
+          className="w-full mt-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 font-bold py-2 rounded-lg transition-colors text-sm"
+        >
+          Remove Streak Freeze
+        </button>
       </div>
     </div>
   );

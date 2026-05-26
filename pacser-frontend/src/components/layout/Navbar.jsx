@@ -93,9 +93,20 @@ export default function Navbar() {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 z-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{user.first_name} {user.last_name}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      {user.first_name} {user.last_name} {user.role === 'admin' && <span className="text-blue-500">(Admin)</span>}
+                    </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                   </div>
+                  {user.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
                   <Link
                     to="/profile"
                     onClick={() => setDropdownOpen(false)}

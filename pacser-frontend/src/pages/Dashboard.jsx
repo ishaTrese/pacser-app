@@ -68,7 +68,10 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    if (!user?.double_xp_until) return;
+    if (!user?.double_xp_until) {
+      setTimeLeft('');
+      return;
+    }
     
     const calculateTimeLeft = () => {
       const now = new Date();

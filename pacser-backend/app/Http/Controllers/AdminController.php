@@ -27,6 +27,14 @@ class AdminController extends Controller
         if (isset($validated['xp'])) $user->xp = $validated['xp'];
         if (isset($validated['streak'])) $user->streak = $validated['streak'];
 
+        if ($request->has('remove_double_xp') && $request->input('remove_double_xp') === true) {
+            $user->double_xp_until = null;
+        }
+
+        if ($request->has('remove_streak_freeze') && $request->input('remove_streak_freeze') === true) {
+            $user->streak_freeze_active = false;
+        }
+
         $user->save();
 
         return response()->json([
