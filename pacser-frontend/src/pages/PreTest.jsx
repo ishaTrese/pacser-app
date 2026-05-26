@@ -10,7 +10,7 @@ export default function PreTest() {
   
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [finished, setFinished] = useState(false);
@@ -133,38 +133,7 @@ export default function PreTest() {
     );
   }
 
-  if (!started) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-        <div className="bg-white rounded-3xl shadow-xl p-10 max-w-xl w-full border border-slate-200 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600" />
-          <Target size={48} className="text-blue-600 mx-auto mb-6" />
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Diagnostic Pre-test</h1>
-          <p className="text-slate-600 text-lg leading-relaxed mb-6">
-            Welcome to Pacser! Before you begin your review, we need to gauge your current knowledge level.
-          </p>
-          
-          <div className="bg-blue-50 text-blue-900 p-5 rounded-2xl text-left mb-8 space-y-3">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
-              <p className="font-medium text-sm">This is a <strong>50-question exam</strong> (10 per subject) covering Mathematics, English, Filipino, Constitution, and Code of Conduct.</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <AlertCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
-              <p className="font-medium text-sm">You will <strong>not earn XP or Points</strong> for this test. It is strictly to establish your baseline mastery.</p>
-            </div>
-          </div>
 
-          <button 
-            onClick={() => setStarted(true)}
-            className="w-full py-4 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all text-lg"
-          >
-            Start Pre-test
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const currentQuestion = questions[currentIndex];
   const hasAnswered = answers[currentQuestion.id] !== undefined;
