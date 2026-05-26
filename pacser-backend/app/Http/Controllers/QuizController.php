@@ -25,8 +25,9 @@ class QuizController extends Controller
 
         $quizSet = QuizSet::findOrFail($id);
         
-        // Load questions and answers randomly
+        // Load questions and answers randomly, excluding pretest-flagged ones
         $questions = Question::where('quiz_set_id', $quizSet->id)
+            ->where('is_pretest', false)
             ->with(['answers' => function ($query) {
                 $query->inRandomOrder();
             }])
@@ -59,7 +60,7 @@ class QuizController extends Controller
 
         // Award XP and Points
         $user = $request->user();
-        $xpGained = ($validated['score'] * 10) + ($percentage == 100 ? 20 : 0);
+        $xpGained = $validated['score'] * 3;
         $pointsGained = $validated['score'] * 5;
 
         // Apply Double XP Boost if active

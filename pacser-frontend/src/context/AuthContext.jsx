@@ -11,6 +11,15 @@ export function AuthProvider({ children }) {
   const saveUserClass = (className) => {
     localStorage.setItem('userClass', className)
     setUserClass(className)
+    
+    // Apply theme based on category
+    const theme = className === 'Professional' ? 'dark' : 'light'
+    localStorage.setItem('pacser-theme', theme)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }
 
   useEffect(() => {

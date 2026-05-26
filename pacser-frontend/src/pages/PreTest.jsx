@@ -16,22 +16,25 @@ export default function PreTest() {
   const [finished, setFinished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState(null);
+  const justCompleted = React.useRef(false);
 
   useEffect(() => {
-    // If user already finished pretest, kick them out
-    if (user?.pretest_completed) {
+    // If user already finished pretest and didn't just finish it now, kick them out
+    if (user?.pretest_completed && !justCompleted.current) {
       navigate('/dashboard', { replace: true });
       return;
     }
 
-    api.get('/pretest/questions')
-      .then(res => {
-        setQuestions(res.data.questions);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load pretest", err);
-      });
+    if (!justCompleted.current) {
+      api.get('/pretest/questions')
+        .then(res => {
+          setQuestions(res.data.questions);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to load pretest", err);
+        });
+    }
   }, [user, navigate]);
 
   const handleSelect = (questionId, answerId, isCorrect, subjectSlug, subjectId) => {
@@ -77,6 +80,7 @@ export default function PreTest() {
         updateUserStats(res.data.user);
       }
       setResults(scores);
+      justCompleted.current = true;
       setFinished(true);
     } catch (err) {
       console.error(err);

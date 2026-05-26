@@ -83,7 +83,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 flex flex-col transition-colors">
       <Navbar />
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
@@ -112,7 +112,7 @@ export default function Home() {
             practice tests built for Filipino reviewees.
           </p>
 
-          <p className="text-slate-900 font-semibold text-base mb-4">Choose Your Category</p>
+          <p className="text-slate-900 dark:text-slate-50 font-semibold text-base mb-4">Choose Your Category</p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-4xl justify-center">
             {/* Professional Card */}
@@ -185,7 +185,7 @@ export default function Home() {
       </section>
 
       {/* ── RECOMMENDED REVIEWER (REVENUE FIRST) ────────────────── */}
-      <section className="bg-blue-600 py-12 px-4 relative overflow-hidden">
+      <section className="bg-blue-600 dark:bg-blue-900 py-12 px-4 relative overflow-hidden transition-colors">
         {/* Background Accent */}
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl"></div>
@@ -224,23 +224,23 @@ export default function Home() {
       </section>
 
       {/* ── WHY PACSER ───────────────────────────────────────────── */}
-      <section className="bg-slate-50 py-16 px-4">
+      <section className="bg-slate-50 dark:bg-slate-900 py-16 px-4 transition-colors">
         <div className="max-w-6xl mx-auto">
-          <p className="text-center text-blue-600 text-xs font-bold tracking-widest uppercase mb-2">
+          <p className="text-center text-blue-600 dark:text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">
             Why PACSER
           </p>
-          <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-slate-900 mb-10">
+          <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-10">
             Everything You Need to Pass
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="bg-white border border-slate-200 shadow-sm rounded-2xl p-7 flex flex-col gap-4 hover:border hover:border-blue-200 transition"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-7 flex flex-col gap-4 hover:border-blue-200 dark:hover:border-blue-700 transition"
               >
                 {f.icon}
-                <h3 className="font-bold text-slate-900 text-lg">{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">{f.title}</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -248,64 +248,64 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT US ─────────────────────────────────────────────── */}
-      <section className="bg-white border border-slate-200 shadow-sm py-16 px-4">
+      <section className="bg-white dark:bg-slate-800 border-y border-slate-200 dark:border-slate-700 shadow-sm py-16 px-4 transition-colors">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-blue-600 text-xs font-bold tracking-widest uppercase mb-2">
+          <p className="text-blue-600 dark:text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">
             About Us
           </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-6">
-            Your Partner in <span className="text-blue-600">CSE Success</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-6">
+            Your Partner in <span className="text-blue-600 dark:text-blue-400">CSE Success</span>
           </h2>
           <p
-            className="text-slate-300 text-base leading-relaxed mb-8"
+            className="text-slate-500 dark:text-slate-400 text-base leading-relaxed mb-8"
             dangerouslySetInnerHTML={{ __html: COMPANY.description }}
           />
 
           {/* Vision + Mission */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8 text-left">
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col gap-3">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <Eye size={22} className="text-blue-600 shrink-0" />
-                <h3 className="font-bold text-slate-900 text-base">Our Vision</h3>
+                <Eye size={22} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Our Vision</h3>
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed">{COMPANY.vision}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{COMPANY.vision}</p>
             </div>
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col gap-3">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <Target size={22} className="text-blue-600 shrink-0" />
-                <h3 className="font-bold text-slate-900 text-base">Our Mission</h3>
+                <Target size={22} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Our Mission</h3>
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed">{COMPANY.mission}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{COMPANY.mission}</p>
             </div>
           </div>
 
           {/* Contact placeholders */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-500 mt-12">
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center border border-transparent hover:border-blue-200 transition-colors">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-500 dark:text-slate-400 mt-12">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
               <div className="w-14 h-14 rounded-full bg-blue-600/10 flex items-center justify-center">
-                <MapPin size={24} className="text-blue-600" />
+                <MapPin size={24} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-slate-900 font-bold text-base mb-1">Address</p>
-                <p className="text-slate-400">{COMPANY.address}</p>
+                <p className="text-slate-900 dark:text-white font-bold text-base mb-1">Address</p>
+                <p>{COMPANY.address}</p>
               </div>
             </div>
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center border border-transparent hover:border-blue-200 transition-colors">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
               <div className="w-14 h-14 rounded-full bg-blue-600/10 flex items-center justify-center">
-                <Phone size={24} className="text-blue-600" />
+                <Phone size={24} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-slate-900 font-bold text-base mb-1">Contact</p>
-                <p className="text-slate-400">{COMPANY.contact}</p>
+                <p className="text-slate-900 dark:text-white font-bold text-base mb-1">Contact</p>
+                <p>{COMPANY.contact}</p>
               </div>
             </div>
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center border border-transparent hover:border-blue-200 transition-colors">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col items-center gap-4 text-center hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
               <div className="w-14 h-14 rounded-full bg-blue-600/10 flex items-center justify-center">
-                <Mail size={24} className="text-blue-600" />
+                <Mail size={24} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-slate-900 font-bold text-base mb-1">Email</p>
-                <p className="text-slate-400">{COMPANY.email}</p>
+                <p className="text-slate-900 dark:text-white font-bold text-base mb-1">Email</p>
+                <p>{COMPANY.email}</p>
               </div>
             </div>
           </div>
@@ -313,27 +313,27 @@ export default function Home() {
       </section>
 
       {/* ── SUCCESS STORIES ──────────────────────────────────────── */}
-      <section className="bg-slate-50 py-16 px-4">
+      <section className="bg-slate-50 dark:bg-slate-900 py-16 px-4 transition-colors">
         <div className="max-w-6xl mx-auto">
-          <p className="text-center text-blue-600 text-xs font-bold tracking-widest uppercase mb-2">
+          <p className="text-center text-blue-600 dark:text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">
             Success Stories
           </p>
-          <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-slate-900 mb-10">
-            Hear from Our <span className="text-blue-600">Passers</span>
+          <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-10">
+            Hear from Our <span className="text-blue-600 dark:text-blue-400">Passers</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="flex flex-col gap-4 max-w-sm mx-auto">
                 {/* Dialogue Box */}
-                <div className="relative bg-white border border-slate-200 shadow-sm rounded-xl p-4 shadow-xl border border-slate-700/50">
-                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white border border-slate-200 shadow-sm rotate-45 border-b border-r border-slate-700/50"></div>
-                  <p className="text-slate-300 text-xs italic leading-relaxed relative z-10">"{t.quote}"</p>
+                <div className="relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 shadow-xl">
+                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rotate-45 border-b border-r"></div>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs italic leading-relaxed relative z-10">"{t.quote}"</p>
                 </div>
                 
                 {/* Player Stats */}
                 <div className="flex items-center gap-3 pl-2">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full border-2 border-[#b0902a] bg-slate-50 flex items-center justify-center text-[#b0902a] font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-full border-2 border-[#b0902a] bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-[#b0902a] font-bold text-sm shrink-0">
                       {t.initials}
                     </div>
                     <div className="absolute -top-1 -right-2 bg-[#b0902a] text-slate-900 text-[8px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-[#0b0f17] shadow-md">
@@ -341,8 +341,8 @@ export default function Home() {
                     </div>
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 text-xs">{t.name}</p>
-                    <p className="text-blue-600 text-[10px] font-semibold">{t.role}</p>
+                    <p className="font-bold text-slate-900 dark:text-white text-xs">{t.name}</p>
+                    <p className="text-blue-600 dark:text-blue-400 text-[10px] font-semibold">{t.role}</p>
                   </div>
                 </div>
               </div>

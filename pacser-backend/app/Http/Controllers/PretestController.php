@@ -25,15 +25,21 @@ class PretestController extends Controller
                 ->select('questions.*')
                 ->get();
 
-            // Fallback for development/testing if no is_pretest flagged questions exist yet
-            if ($questions->isEmpty()) {
-                $questions = Question::join('quiz_sets', 'questions.quiz_set_id', '=', 'quiz_sets.id')
+            // Fallback: If not enough is_pretest questions, fill the rest from the general pool
+            if ($questions->count() < 10) {
+                $needed = 10 - $questions->count();
+                $existingIds = $questions->pluck('id')->toArray();
+                
+                $fallbackQuestions = Question::join('quiz_sets', 'questions.quiz_set_id', '=', 'quiz_sets.id')
                     ->where('quiz_sets.subject_id', $subject->id)
+                    ->whereNotIn('questions.id', $existingIds)
                     ->with(['answers' => function ($q) { $q->inRandomOrder(); }])
                     ->inRandomOrder()
-                    ->limit(10)
+                    ->limit($needed)
                     ->select('questions.*')
                     ->get();
+                    
+                $questions = $questions->concat($fallbackQuestions);
             }
 
             // Shuffle answers and map subject info for the frontend
