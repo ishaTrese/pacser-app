@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/layout/Navbar'
 import Breadcrumb from '../components/layout/Breadcrumb'
+import CategoryBadge from '../components/ui/CategoryBadge'
 import { Flame, BookOpen, Medal, Target, ChevronRight, PenTool, Scale, Shield, BookText } from 'lucide-react'
 import api from '../api/axios'
 
@@ -105,7 +106,10 @@ export default function Dashboard() {
         {/* Top Header & Greeting */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-2">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Welcome back, {displayName}!</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center flex-wrap">
+              Welcome back, {displayName}!
+              <CategoryBadge />
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Your Civil Service journey awaits. What are we studying today?</p>
           </div>
           <button 

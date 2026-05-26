@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/layout/Navbar';
 import { Search, Trophy, Medal } from 'lucide-react';
+import CategoryBadge from '../components/ui/CategoryBadge';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
@@ -39,7 +40,10 @@ export default function Leaderboard() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">Leaderboards</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center flex-wrap">
+              Leaderboards
+              <CategoryBadge />
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
               See how you stack up against other CSE aspirants.
             </p>

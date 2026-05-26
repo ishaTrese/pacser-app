@@ -5,6 +5,7 @@ import Breadcrumb from '../components/layout/Breadcrumb';
 import { PlayCircle, Clock, CheckCircle, Lock, BookOpen, Zap } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import CategoryBadge from '../components/ui/CategoryBadge';
 
 export default function SubjectDetail() {
   const { subjectId } = useParams();
@@ -40,7 +41,10 @@ export default function SubjectDetail() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize mb-2">{subjectId.replace(/-/g, ' ')}</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize mb-2 flex items-center flex-wrap">
+              {subjectId.replace(/-/g, ' ')}
+              <CategoryBadge />
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
               Complete all practice sets to achieve mastery in this subject.
             </p>

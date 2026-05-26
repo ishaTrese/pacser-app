@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import { Shield, Star, Flame, Target, Zap, Award, BookOpen, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import CategoryBadge from '../components/ui/CategoryBadge';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -27,7 +28,10 @@ export default function Profile() {
         
         {/* Header Section */}
         <div className="mb-5 shrink-0">
-          <h1 className="text-slate-900 dark:text-white font-black text-2xl">My Profile</h1>
+          <h1 className="text-slate-900 dark:text-white font-black text-2xl flex items-center flex-wrap">
+            My Profile
+            <CategoryBadge />
+          </h1>
           <p className="text-slate-400 dark:text-slate-500 font-medium text-sm">Manage your profile, track progress, and redeem codes.</p>
         </div>
 

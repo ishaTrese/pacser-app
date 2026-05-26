@@ -137,7 +137,7 @@ export default function Navbar() {
               to="/login"
               className="px-5 py-2 rounded-full text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
             >
-              Log In
+              Sign In
             </Link>
             <Link
               to="/register"

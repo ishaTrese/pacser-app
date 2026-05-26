@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
+import CategoryBadge from '../components/ui/CategoryBadge';
 import api from '../api/axios';
 
 export default function Shop() {
@@ -62,7 +63,10 @@ export default function Shop() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">Shop</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center flex-wrap">
+              Shop
+              <CategoryBadge />
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
               Redeem points for books, perks, and more!
             </p>

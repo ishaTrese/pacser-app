@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/layout/Breadcrumb';
 import { BookText, Scale, Shield, PenTool, BookOpen, Zap } from 'lucide-react';
+import CategoryBadge from '../components/ui/CategoryBadge';
 import { useAuth } from '../context/AuthContext';
 
 const SUBJECTS = [
@@ -61,7 +62,10 @@ export default function Learn() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">Select a Subject</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center flex-wrap">
+              Select a Subject
+              <CategoryBadge />
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
               Choose a domain to start practicing. All questions are modeled after the actual Civil Service Examination format.
             </p>
