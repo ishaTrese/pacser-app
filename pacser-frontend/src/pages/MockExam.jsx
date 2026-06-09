@@ -37,7 +37,7 @@ export default function MockExam() {
 
   useEffect(() => {
     // If user already finished mock exam and didn't just finish it now, kick them out
-    if (user?.mock_exam_completed && !justCompleted.current) {
+    if (user?.mock_exam_completed && !user?.is_premium && !justCompleted.current) {
       navigate('/dashboard', { replace: true });
       return;
     }

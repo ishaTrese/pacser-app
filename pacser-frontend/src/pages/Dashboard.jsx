@@ -187,7 +187,7 @@ export default function Dashboard() {
         </div>
 
         {/* Mock Exam CTA at Bottom */}
-        {!user?.mock_exam_completed && userClass && (
+        {(!user?.mock_exam_completed || user?.is_premium) && userClass && (
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-blue-600/20">
             <div className="text-white flex-1">
               <h2 className="text-2xl font-black mb-4 flex items-center gap-3">

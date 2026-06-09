@@ -13,6 +13,14 @@ class MockExamController extends Controller
 {
     public function getQuestions(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user->is_premium && MockExamResult::where('user_id', $user->id)->count() >= 1) {
+            return response()->json([
+                'message' => 'Free users are limited to 1 mock exam attempt. Upgrade to Premium for unlimited attempts.'
+            ], 403);
+        }
+
         $level = $this->normalizeLevel($request->query('level', 'professional'));
         $allocation = config("exam_subjects.levels.$level.mock_exam_allocation", []);
         $subjectSlugs = config("exam_subjects.levels.$level.subjects", []);
@@ -75,6 +83,12 @@ class MockExamController extends Controller
         ]);
 
         $user = $request->user();
+
+        if (!$user->is_premium && MockExamResult::where('user_id', $user->id)->count() >= 1) {
+            return response()->json([
+                'message' => 'Free users are limited to 1 mock exam attempt. Upgrade to Premium for unlimited attempts.'
+            ], 403);
+        }
 
         $result = MockExamResult::create([
             'user_id' => $user->id,
