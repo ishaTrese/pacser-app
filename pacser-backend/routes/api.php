@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin God Mode & Content Management
     Route::post('/admin/god-mode', [\App\Http\Controllers\AdminController::class, 'godModeUpdate']);
     Route::get('/admin/stats', [\App\Http\Controllers\AdminController::class, 'stats']);
+    Route::get('/admin/quiz-sets', [\App\Http\Controllers\AdminController::class, 'getQuizSets']);
     Route::get('/admin/questions', [\App\Http\Controllers\AdminController::class, 'getQuestions']);
     Route::post('/admin/questions', [\App\Http\Controllers\AdminController::class, 'createQuestion']);
     Route::put('/admin/questions/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuestion']);

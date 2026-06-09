@@ -72,6 +72,22 @@ class AdminController extends Controller
         ]);
     }
 
+    public function getQuizSets(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $quizSets = \App\Models\QuizSet::with('subject')
+            ->orderBy('subject_id')
+            ->orderBy('order_index')
+            ->get();
+
+        return response()->json([
+            'quiz_sets' => $quizSets
+        ]);
+    }
+
     public function createQuestion(Request $request)
     {
         if ($request->user()->role !== 'admin') {

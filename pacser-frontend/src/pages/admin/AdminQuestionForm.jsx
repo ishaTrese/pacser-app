@@ -11,7 +11,7 @@ export default function AdminQuestionForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(!isNew);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [quizSets, setQuizSets] = useState([]);
   
@@ -32,26 +32,23 @@ export default function AdminQuestionForm() {
       return;
     }
 
-    const fetchConfig = async () => {
+    const fetchFormData = async () => {
       try {
-        // We need quiz sets for the dropdown
-        const res = await api.get('/admin/stats'); // Actually need quiz sets, let's just fetch subjects/sets. For now, we will mock or fetch proper data if needed.
-        // Wait, we don't have an endpoint for just quiz sets. Let's assume we use standard ones or create an endpoint.
-      } catch(err) {}
-    };
-    
-    const fetchQuestion = async () => {
-      try {
-        const res = await api.get('/admin/questions');
-        const q = res.data.questions.find(q => q.id.toString() === id);
-        if (q) {
-          setForm({
-            quiz_set_id: q.quiz_set_id,
-            question_text: q.question_text,
-            explanation: q.explanation || '',
-            is_pretest: q.is_pretest,
-            answers: q.answers.length > 0 ? q.answers.map(a => ({ id: a.id, answer_text: a.answer_text, is_correct: !!a.is_correct })) : form.answers
-          });
+        const quizSetsRes = await api.get('/admin/quiz-sets');
+        setQuizSets(quizSetsRes.data.quiz_sets);
+
+        if (!isNew) {
+          const res = await api.get('/admin/questions');
+          const q = res.data.questions.find(q => q.id.toString() === id);
+          if (q) {
+            setForm({
+              quiz_set_id: q.quiz_set_id,
+              question_text: q.question_text,
+              explanation: q.explanation || '',
+              is_pretest: q.is_pretest,
+              answers: q.answers.length > 0 ? q.answers.map(a => ({ id: a.id, answer_text: a.answer_text, is_correct: !!a.is_correct })) : form.answers
+            });
+          }
         }
       } catch (err) {
         console.error(err);
@@ -60,9 +57,7 @@ export default function AdminQuestionForm() {
       }
     };
 
-    if (!isNew) {
-      fetchQuestion();
-    }
+    fetchFormData();
   }, [id, user, navigate, isNew]);
 
   const handleSave = async () => {
@@ -76,7 +71,7 @@ export default function AdminQuestionForm() {
       navigate('/admin');
     } catch (err) {
       console.error(err);
-      alert('Failed to save question. Make sure you set a quiz_set_id (e.g., 1)');
+      alert('Failed to save question. Make sure a quiz set is selected and all required fields are filled.');
     } finally {
       setSaving(false);
     }
@@ -120,14 +115,19 @@ export default function AdminQuestionForm() {
           <div className="p-8 space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Quiz Set ID</label>
-                <input 
-                  type="number" 
+                <label className="block text-sm font-bold text-slate-700 mb-2">Quiz Set</label>
+                <select
                   value={form.quiz_set_id}
                   onChange={e => setForm({...form, quiz_set_id: e.target.value})}
                   className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                  placeholder="e.g. 1"
-                />
+                >
+                  <option value="">Select a quiz set</option>
+                  {quizSets.map(set => (
+                    <option key={set.id} value={set.id}>
+                      {set.subject?.name || 'Unknown Subject'} — {set.name}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-slate-400 mt-1">Which quiz module does this belong to?</p>
               </div>
               <div className="flex items-end pb-2">
