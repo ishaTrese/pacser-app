@@ -14,21 +14,16 @@ export default function ClassSelection() {
   };
 
   const profContent = [
-    "Vocabulary & Grammar",
-    "Paragraph Organization",
-    "Reading Comprehension",
-    "Analogy & Logic",
-    "Numerical Reasoning",
-    "General Information (Constitution, Code of Conduct, etc.)"
+    "Numerical Ability",
+    "Analytical Ability",
+    "Verbal Ability",
+    "General Information"
   ];
 
   const subProfContent = [
-    "Vocabulary & Grammar",
-    "Paragraph Organization",
-    "Reading Comprehension",
-    "Spelling",
-    "Clerical Operations",
-    "Numerical Reasoning",
+    "Numerical Ability",
+    "Clerical Ability",
+    "Verbal Ability",
     "General Information"
   ];
 

@@ -117,13 +117,23 @@ export default function MockExam() {
       }
     });
 
-    // Ensure all subjects are represented if score is 0
-    const perSubjectTotal = isProfessional ? 34 : 33;
+    // Ensure all subjects are represented with the actual allocation returned by the API.
+    const subjectTotals = {};
     questions.forEach(q => {
-      if (!scores[q.subject_slug]) {
-        scores[q.subject_slug] = { score: 0, total: perSubjectTotal, subject_id: q.subject_id };
+      if (!subjectTotals[q.subject_slug]) {
+        subjectTotals[q.subject_slug] = {
+          total: 0,
+          subject_id: q.subject_id
+        };
+      }
+      subjectTotals[q.subject_slug].total += 1;
+    });
+
+    Object.entries(subjectTotals).forEach(([slug, data]) => {
+      if (!scores[slug]) {
+        scores[slug] = { score: 0, total: data.total, subject_id: data.subject_id };
       } else {
-        scores[q.subject_slug].total = perSubjectTotal;
+        scores[slug].total = data.total;
       }
     });
 

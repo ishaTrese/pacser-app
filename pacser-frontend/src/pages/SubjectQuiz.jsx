@@ -23,7 +23,7 @@ export default function SubjectQuiz() {
 
   // Fallback info if we navigated directly without state
   const quizTitle = location.state?.title || `Quiz Set ${quizSetId}`;
-  const resolvedSubjectId = String(location.state?.subjectId || 'mathematics');
+  const resolvedSubjectId = String(location.state?.subjectId || 'numerical-ability');
 
   useEffect(() => {
     api.get(`/quiz-sets/${quizSetId}/questions`)

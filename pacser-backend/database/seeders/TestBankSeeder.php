@@ -17,8 +17,9 @@ class TestBankSeeder extends Seeder
         // Format: [ 'q' => 'Question?', 'opts' => ['A', 'B', 'C', 'D'], 'ans' => 1 (Index of correct option), 'exp' => 'Explanation' ]
         
         $testBank = [
-            'Mathematics' => [
-                'slug' => 'mathematics',
+            'numerical-ability' => [
+                'name' => 'Numerical Ability',
+                'slug' => 'numerical-ability',
                 'sets' => [
                     'Numerical Word Problems (Set 1)' => [
                         ['q' => 'What is 15% of 200?', 'opts' => ['20', '30', '40', '50'], 'ans' => 1, 'exp' => '0.15 * 200 = 30.'],
@@ -34,8 +35,9 @@ class TestBankSeeder extends Seeder
                     ]
                 ]
             ],
-            '1987 Constitution' => [
-                'slug' => 'constitution',
+            'general-information-constitution' => [
+                'name' => 'General Information',
+                'slug' => 'general-information',
                 'sets' => [
                     'Articles III and VI (Set 1)' => [
                         ['q' => 'Which article in the 1987 Constitution covers the Bill of Rights?', 'opts' => ['Article II', 'Article III', 'Article IV', 'Article V'], 'ans' => 1, 'exp' => 'Article III explicitly outlines the Bill of Rights.'],
@@ -51,8 +53,9 @@ class TestBankSeeder extends Seeder
                     ]
                 ]
             ],
-            'Code of Conduct (RA 6713)' => [
-                'slug' => 'code-of-conduct',
+            'general-information-code-of-conduct' => [
+                'name' => 'General Information',
+                'slug' => 'general-information',
                 'sets' => [
                     'Ethical Standards (Set 1)' => [
                         ['q' => 'What is the short title of R.A. 6713?', 'opts' => ['Anti-Graft Act', 'Code of Conduct and Ethical Standards for Public Officials', 'Civil Service Law', 'Public Service Act'], 'ans' => 1, 'exp' => 'RA 6713 is known as the Code of Conduct and Ethical Standards for Public Officials and Employees.'],
@@ -68,8 +71,9 @@ class TestBankSeeder extends Seeder
                     ]
                 ]
             ],
-            'English' => [
-                'slug' => 'english',
+            'verbal-ability-english' => [
+                'name' => 'Verbal Ability',
+                'slug' => 'verbal-ability',
                 'sets' => [
                     'Grammar and Comprehension (Set 1)' => [
                         ['q' => 'Identify the correct sentence:', 'opts' => ['He don\'t know the answer.', 'He doesn\'t know the answer.', 'He isn\'t know the answer.', 'He didn\'t knew the answer.'], 'ans' => 1, 'exp' => 'The third-person singular pronoun "he" takes "doesn\'t" (does not).'],
@@ -85,8 +89,9 @@ class TestBankSeeder extends Seeder
                     ]
                 ]
             ],
-            'Filipino' => [
-                'slug' => 'filipino',
+            'verbal-ability-filipino' => [
+                'name' => 'Verbal Ability',
+                'slug' => 'verbal-ability',
                 'sets' => [
                     'Balarila at Talasalitaan (Set 1)' => [
                         ['q' => 'Alin sa mga sumusunod ang tamang baybay?', 'opts' => ['Nakakabahala', 'Nakababahala', 'Nakaka-bahala', 'Naka-kabahala'], 'ans' => 1, 'exp' => 'Sa pag-uulit ng pantig, inuulit ang unang pantig ng salitang-ugat (ba-ha-la), kaya "nakababahala".'],
@@ -108,6 +113,8 @@ class TestBankSeeder extends Seeder
 
         try {
             foreach ($testBank as $subjectName => $subjectData) {
+                $subjectName = $subjectData['name'] ?? $subjectName;
+
                 // Fetch or Create the Subject
                 $subject = Subject::firstOrCreate(
                     ['slug' => $subjectData['slug']],

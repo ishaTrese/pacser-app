@@ -1,57 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
-import Breadcrumb from '../components/layout/Breadcrumb';
-import { BookText, Scale, Shield, PenTool, BookOpen, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import CategoryBadge from '../components/ui/CategoryBadge';
 import { useAuth } from '../context/AuthContext';
-
-const SUBJECTS = [
-  {
-    id: 'mathematics',
-    title: 'Mathematics',
-    description: 'Numerical reasoning, data interpretation, basic operations, and word problems.',
-    icon: <PenTool size={32} className="text-blue-600 dark:text-blue-400" />,
-    color: 'bg-blue-50',
-    borderColor: 'border-blue-200'
-  },
-  {
-    id: 'constitution',
-    title: '1987 Constitution',
-    description: 'Fundamentals of the Philippine Constitution, state policies, and bill of rights.',
-    icon: <Scale size={32} className="text-yellow-600 dark:text-yellow-400" />,
-    color: 'bg-yellow-50',
-    borderColor: 'border-yellow-100'
-  },
-  {
-    id: 'code-of-conduct',
-    title: 'Code of Conduct',
-    description: 'R.A. No. 6713 - Ethical standards for public officials and employees.',
-    icon: <Shield size={32} className="text-blue-600 dark:text-blue-400" />,
-    color: 'bg-blue-50',
-    borderColor: 'border-blue-200'
-  },
-  {
-    id: 'filipino',
-    title: 'Filipino',
-    description: 'Talasalitaan, wastong gamit, pag-unawa sa binasa, at balarila.',
-    icon: <BookText size={32} className="text-yellow-600 dark:text-yellow-400" />,
-    color: 'bg-yellow-50',
-    borderColor: 'border-yellow-100'
-  },
-  {
-    id: 'english',
-    title: 'English',
-    description: 'Vocabulary, grammar, reading comprehension, and correct usage.',
-    icon: <BookOpen size={32} className="text-purple-600 dark:text-purple-400" />,
-    color: 'bg-purple-50',
-    borderColor: 'border-purple-200'
-  }
-];
+import { getSubjectsForClass } from '../config/examSubjects';
 
 export default function Learn() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userClass } = useAuth();
+  const subjects = getSubjectsForClass(userClass);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
@@ -81,9 +39,10 @@ export default function Learn() {
 
         {/* Subject Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SUBJECTS.map((subject) => {
+          {subjects.map((subject) => {
             const darkColor = subject.color.replace('50', '900/30');
             const darkBorderColor = subject.borderColor.replace('100', '700/50').replace('200', '700/50');
+            const Icon = subject.icon;
             
             return (
               <div 
@@ -92,7 +51,7 @@ export default function Learn() {
                 className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
               >
                 <div className={`w-16 h-16 rounded-2xl ${subject.color} dark:${darkColor} ${subject.borderColor} dark:${darkBorderColor} border flex items-center justify-center mb-6 shadow-sm`}>
-                  {subject.icon}
+                  <Icon size={32} className={subject.iconClass} />
                 </div>
                 
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">

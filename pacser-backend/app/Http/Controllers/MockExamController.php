@@ -13,14 +13,21 @@ class MockExamController extends Controller
 {
     public function getQuestions(Request $request)
     {
-        $level = $request->query('level', 'professional');
-        $itemsPerSubject = $level === 'professional' ? 34 : 33;
+        $level = $this->normalizeLevel($request->query('level', 'professional'));
+        $allocation = config("exam_subjects.levels.$level.mock_exam_allocation", []);
+        $subjectSlugs = config("exam_subjects.levels.$level.subjects", []);
+        $slugOrder = array_flip($subjectSlugs);
 
-        $subjects = Subject::all();
+        $subjects = Subject::whereIn('slug', $subjectSlugs)
+            ->get()
+            ->sortBy(fn ($subject) => $slugOrder[$subject->slug] ?? 999)
+            ->values();
         $mockQuestions = [];
 
-        // Fetch 30 random questions from each of the 5 subjects to total 150
+        // Fetch the official item allocation for each subject in the selected level.
         foreach ($subjects as $subject) {
+            $itemsForSubject = $allocation[$subject->slug] ?? 0;
+
             $questions = Question::whereHas('quizSet', function($q) use ($subject) {
                                     $q->where('subject_id', $subject->id);
                                  })
@@ -29,7 +36,7 @@ class MockExamController extends Controller
                                      $query->inRandomOrder();
                                  }])
                                  ->inRandomOrder()
-                                 ->take($itemsPerSubject)
+                                 ->take($itemsForSubject)
                                  ->get();
 
             $questions = $questions->map(function ($q) use ($subject) {
@@ -49,6 +56,13 @@ class MockExamController extends Controller
         return response()->json([
             'questions' => $mockQuestions
         ]);
+    }
+
+    private function normalizeLevel(?string $level): string
+    {
+        $key = strtolower(trim($level ?? 'professional'));
+
+        return config("exam_subjects.aliases.$key", 'professional');
     }
 
     public function submit(Request $request)

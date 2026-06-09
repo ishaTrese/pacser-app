@@ -34,7 +34,7 @@ export default function ProtectedRoute({ children }) {
             <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 p-5 rounded-2xl text-left mb-8 space-y-3">
               <div className="flex items-start gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <p className="font-medium text-sm">This is a <strong>50-question exam</strong> (10 per subject) covering Mathematics, English, Filipino, Constitution, and Code of Conduct.</p>
+                <p className="font-medium text-sm">This is a <strong>diagnostic exam</strong> with 10 questions per subject based on your selected exam category.</p>
               </div>
               <div className="flex items-start gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

@@ -2,58 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/layout/Navbar'
-import Breadcrumb from '../components/layout/Breadcrumb'
 import CategoryBadge from '../components/ui/CategoryBadge'
-import { Flame, BookOpen, Medal, Target, ChevronRight, PenTool, Scale, Shield, BookText } from 'lucide-react'
+import { Flame, BookOpen, Target, ChevronRight, Shield } from 'lucide-react'
 import api from '../api/axios'
-
-const SUBJECTS = [
-  {
-    id: 'mathematics',
-    title: 'Mathematics',
-    description: 'Numerical reasoning and problem solving',
-    icon: <PenTool size={28} className="text-blue-600" />,
-    color: 'bg-blue-50',
-    borderColor: 'border-blue-200'
-  },
-  {
-    id: 'constitution',
-    title: '1987 Constitution',
-    description: 'Fundamentals of the Philippine Constitution',
-    icon: <Scale size={28} className="text-yellow-500" />,
-    color: 'bg-yellow-50',
-    borderColor: 'border-yellow-100'
-  },
-  {
-    id: 'code-of-conduct',
-    title: 'Code of Conduct',
-    description: 'R.A. No. 6713 - Ethical standards for public officials',
-    icon: <Shield size={28} className="text-blue-600" />,
-    color: 'bg-blue-50',
-    borderColor: 'border-blue-200'
-  },
-  {
-    id: 'filipino',
-    title: 'Filipino',
-    description: 'Talasalitaan, wastong gamit, at balarila',
-    icon: <BookText size={28} className="text-yellow-500" />,
-    color: 'bg-yellow-50',
-    borderColor: 'border-yellow-100'
-  },
-  {
-    id: 'english',
-    title: 'English',
-    description: 'Grammar, vocabulary, and reading comprehension',
-    icon: <BookOpen size={28} className="text-blue-600" />,
-    color: 'bg-blue-50',
-    borderColor: 'border-blue-200'
-  }
-]
+import { getSubjectsForClass } from '../config/examSubjects'
 
 export default function Dashboard() {
   const { user, updateUserStats, userClass } = useAuth()
   const navigate = useNavigate()
   const [stats, setStats] = useState({ quiz_sets_done: 0, mastery: {} })
+  const subjects = getSubjectsForClass(userClass)
 
   const [timeLeft, setTimeLeft] = useState('');
 
@@ -197,11 +155,12 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 px-1 tracking-tight">Reviewer Subjects</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SUBJECTS.map((subject) => {
+            {subjects.map((subject) => {
               const subjectMastery = stats.mastery[subject.id] || 0;
               // Adjust colors for dark mode context
               const darkColor = subject.color.replace('50', '900/30');
               const darkBorderColor = subject.borderColor.replace('100', '700/50').replace('200', '700/50');
+              const Icon = subject.icon;
 
               return (
               <div
@@ -211,7 +170,7 @@ export default function Dashboard() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-14 h-14 rounded-xl ${subject.color} dark:${darkColor} ${subject.borderColor} dark:${darkBorderColor} border flex items-center justify-center`}>
-                    {subject.icon}
+                    <Icon size={28} className={subject.iconClass} />
                   </div>
                   <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50 dark:bg-slate-900 px-3 py-1 rounded-full">{subjectMastery}% Mastery</span>
                 </div>

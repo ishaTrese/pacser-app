@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { ChevronRight, Target, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { getExamLevelKey } from '../config/examSubjects';
 
 export default function PreTest() {
-  const { user, updateUserStats } = useAuth();
+  const { user, updateUserStats, userClass } = useAuth();
   const navigate = useNavigate();
   
   const [questions, setQuestions] = useState([]);
@@ -26,7 +27,7 @@ export default function PreTest() {
     }
 
     if (!justCompleted.current) {
-      api.get('/pretest/questions')
+      api.get(`/pretest/questions?level=${getExamLevelKey(userClass)}`)
         .then(res => {
           setQuestions(res.data.questions);
           setLoading(false);
@@ -35,7 +36,7 @@ export default function PreTest() {
           console.error("Failed to load pretest", err);
         });
     }
-  }, [user, navigate]);
+  }, [user, navigate, userClass]);
 
   const handleSelect = (questionId, answerId, isCorrect, subjectSlug, subjectId) => {
     setAnswers({
@@ -67,7 +68,7 @@ export default function PreTest() {
       }
     });
 
-    // Ensure all 5 subjects are in the payload even if score is 0
+    // Ensure all selected exam subjects are in the payload even if score is 0
     questions.forEach(q => {
       if (!scores[q.subject_slug]) {
         scores[q.subject_slug] = { score: 0, total: 10, subject_id: q.subject_id };
@@ -103,7 +104,7 @@ export default function PreTest() {
               <CheckCircle2 size={32} />
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Baseline Established</h1>
-            <p className="text-slate-500 mt-2">Here is how you performed across the 5 subjects. Don't worry if your scores are low—this is just the beginning of your journey!</p>
+            <p className="text-slate-500 mt-2">Here is how you performed across your exam subjects. Don't worry if your scores are low—this is just the beginning of your journey!</p>
           </div>
 
           <div className="space-y-4 mb-8">

@@ -11,8 +11,15 @@ class PretestController extends Controller
 {
     public function getQuestions(Request $request)
     {
-        // 50 questions total, 10 per subject
-        $subjects = Subject::all();
+        $level = $this->normalizeLevel($request->query('level', 'professional'));
+        $subjectSlugs = config("exam_subjects.levels.$level.subjects", []);
+        $slugOrder = array_flip($subjectSlugs);
+
+        // 10 questions per subject for the selected exam level
+        $subjects = Subject::whereIn('slug', $subjectSlugs)
+            ->get()
+            ->sortBy(fn ($subject) => $slugOrder[$subject->slug] ?? 999)
+            ->values();
         $pretestQuestions = collect();
 
         foreach ($subjects as $subject) {
@@ -59,10 +66,17 @@ class PretestController extends Controller
         ]);
     }
 
+    private function normalizeLevel(?string $level): string
+    {
+        $key = strtolower(trim($level ?? 'professional'));
+
+        return config("exam_subjects.aliases.$key", 'professional');
+    }
+
     public function submit(Request $request)
     {
         $validated = $request->validate([
-            'scores' => 'required|array', // e.g. ['mathematics' => ['score' => 8, 'total' => 10, 'subject_id' => 1], ...]
+            'scores' => 'required|array', // e.g. ['numerical-ability' => ['score' => 8, 'total' => 10, 'subject_id' => 1], ...]
         ]);
 
         $user = $request->user();
