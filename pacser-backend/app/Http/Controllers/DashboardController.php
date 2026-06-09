@@ -33,11 +33,23 @@ class DashboardController extends Controller
             $mastery[$row->slug] = round($row->mastery);
         }
 
+        $user = $request->user();
+        $mockExamAttemptCount = DB::table('mock_exam_results')
+            ->where('user_id', $userId)
+            ->count();
+        $isPremium = (bool) $user->is_premium;
+
         return response()->json([
             'quiz_sets_done' => $quizSetsDone,
             'mastery' => $mastery,
+            'mock_exam' => [
+                'attempt_count' => $mockExamAttemptCount,
+                'can_take_mock_exam' => $isPremium || $mockExamAttemptCount < 1,
+                'attempts_remaining' => $isPremium ? null : max(0, 1 - $mockExamAttemptCount),
+                'is_premium' => $isPremium,
+            ],
             // Include user data too so the frontend can refresh user state if needed
-            'user' => $request->user()
+            'user' => $user
         ]);
     }
 }

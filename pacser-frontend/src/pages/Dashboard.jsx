@@ -10,7 +10,16 @@ import { getSubjectsForClass } from '../config/examSubjects'
 export default function Dashboard() {
   const { user, updateUserStats, userClass } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState({ quiz_sets_done: 0, mastery: {} })
+  const [stats, setStats] = useState({
+    quiz_sets_done: 0,
+    mastery: {},
+    mock_exam: {
+      attempt_count: 0,
+      can_take_mock_exam: true,
+      attempts_remaining: 1,
+      is_premium: false
+    }
+  })
   const subjects = getSubjectsForClass(userClass)
 
   const [timeLeft, setTimeLeft] = useState('');
@@ -18,7 +27,16 @@ export default function Dashboard() {
   useEffect(() => {
     api.get('/dashboard/stats')
       .then(res => {
-        setStats({ quiz_sets_done: res.data.quiz_sets_done, mastery: res.data.mastery })
+        setStats({
+          quiz_sets_done: res.data.quiz_sets_done,
+          mastery: res.data.mastery,
+          mock_exam: res.data.mock_exam || {
+            attempt_count: 0,
+            can_take_mock_exam: true,
+            attempts_remaining: 1,
+            is_premium: false
+          }
+        })
         if (res.data.user) {
           updateUserStats(res.data.user) // Refresh global user object
         }
@@ -54,6 +72,19 @@ export default function Dashboard() {
   }, [user?.double_xp_until]);
 
   const displayName = user ? `${user.first_name} ${user.last_name}` : 'Anna Doe'
+  const mockExam = stats.mock_exam
+  const isPremiumMockUser = mockExam.is_premium || user?.is_premium
+  const canTakeMockExam = mockExam.can_take_mock_exam
+  const mockExamStatusLabel = isPremiumMockUser
+    ? 'Premium - unlimited attempts'
+    : canTakeMockExam
+      ? '1 free attempt available'
+      : 'Free attempt used'
+  const mockExamDescription = isPremiumMockUser
+    ? 'Retake the full-length mock exam whenever you want and use each attempt to sharpen your readiness.'
+    : canTakeMockExam
+      ? 'Use your included free attempt to measure readiness under exam conditions.'
+      : 'You have used your free mock exam attempt. Upgrade to Premium to unlock unlimited retakes.'
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -187,30 +218,47 @@ export default function Dashboard() {
         </div>
 
         {/* Mock Exam CTA at Bottom */}
-        {(!user?.mock_exam_completed || user?.is_premium) && userClass && (
-          <div className="mt-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-blue-600/20">
+        {userClass && (
+          <div className={`mt-8 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg ${
+            canTakeMockExam
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-blue-600/20'
+              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-slate-200/60 dark:shadow-black/10'
+          }`}>
             <div className="text-white flex-1">
-              <h2 className="text-2xl font-black mb-4 flex items-center gap-3">
-                <Target size={28} className="text-blue-200" />
+              <h2 className={`text-2xl font-black mb-4 flex items-center gap-3 ${canTakeMockExam ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                <Target size={28} className={canTakeMockExam ? 'text-blue-200' : 'text-blue-600 dark:text-blue-400'} />
                 Full-Length Mock Exam
               </h2>
-              <div className="space-y-2 mb-4 bg-white/10 p-4 rounded-lg border border-white/20">
-                <p className="text-blue-50 font-bold text-sm md:text-base">
-                  <span className="text-yellow-400">{userClass} Level:</span>
+              <div className={`space-y-2 mb-4 p-4 rounded-lg border ${canTakeMockExam ? 'bg-white/10 border-white/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
+                <p className={`font-bold text-sm md:text-base ${canTakeMockExam ? 'text-blue-50' : 'text-slate-700 dark:text-slate-200'}`}>
+                  <span className={canTakeMockExam ? 'text-yellow-400' : 'text-blue-600 dark:text-blue-400'}>{userClass} Level:</span>
                   {userClass === 'Professional' ? ' 170 items to be completed in 3 hours and 10 minutes.' : ' 165 items to be completed in 2 hours and 40 minutes.'}
                 </p>
+                <p className={`text-xs font-black uppercase tracking-widest ${canTakeMockExam ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                  {mockExamStatusLabel}
+                  {!isPremiumMockUser && ` - ${mockExam.attempts_remaining} remaining`}
+                </p>
               </div>
-              <p className="text-blue-100 font-medium max-w-2xl text-sm leading-relaxed">
-                Test your readiness with our full-length simulated exam to establish your final baseline score. Complete it to unlock the "Mock Exam Complete" badge!
+              <p className={`font-medium max-w-2xl text-sm leading-relaxed ${canTakeMockExam ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                {mockExamDescription}
               </p>
             </div>
             <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
-              <button
-                onClick={() => navigate(`/mock-exam?level=${userClass.toLowerCase()}`)}
-                className="w-full bg-white text-blue-700 hover:bg-blue-50 font-black px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-widest text-sm"
-              >
-                Take Mock Exam
-              </button>
+              {canTakeMockExam ? (
+                <button
+                  onClick={() => navigate(`/mock-exam?level=${userClass.toLowerCase()}`)}
+                  className="w-full bg-white text-blue-700 hover:bg-blue-50 font-black px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-widest text-sm"
+                >
+                  {isPremiumMockUser && mockExam.attempt_count > 0 ? 'Retake Mock Exam' : 'Take Mock Exam'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700 font-black px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-widest text-sm"
+                >
+                  Upgrade For Retakes
+                </button>
+              )}
             </div>
           </div>
         )}
