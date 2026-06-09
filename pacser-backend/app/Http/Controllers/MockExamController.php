@@ -32,6 +32,14 @@ class MockExamController extends Controller
                                  ->take($itemsPerSubject)
                                  ->get();
 
+            $questions = $questions->map(function ($q) use ($subject) {
+                $qArr = $q->toArray();
+                $qArr['subject_slug'] = $subject->slug;
+                $qArr['subject_name'] = $subject->name;
+                $qArr['subject_id'] = $subject->id;
+                return $qArr;
+            });
+
             $mockQuestions = array_merge($mockQuestions, $questions->all());
         }
 
