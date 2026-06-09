@@ -18,7 +18,39 @@ class GenerateDailyMissions implements ShouldQueue
     {
         $today = now()->toDateString();
 
-        $missions = [
+        // Process in chunks to avoid memory issues for large user bases
+        User::chunk(100, function ($users) use ($today) {
+            foreach ($users as $user) {
+                self::ensureForUser($user, $today);
+            }
+        });
+    }
+
+    public static function ensureForUser(User $user, ?string $date = null): void
+    {
+        $date = $date ?? now()->toDateString();
+
+        foreach (self::missionDefinitions() as $mission) {
+            UserMission::firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'mission_type' => $mission['mission_type'],
+                    'date' => $date,
+                ],
+                [
+                    'target' => $mission['target'],
+                    'points_reward' => $mission['points_reward'],
+                    'progress' => 0,
+                    'is_completed' => false,
+                    'is_claimed' => false,
+                ]
+            );
+        }
+    }
+
+    public static function missionDefinitions(): array
+    {
+        return [
             [
                 'mission_type' => 'complete_2_quiz_sets',
                 'target' => 2,
@@ -40,27 +72,5 @@ class GenerateDailyMissions implements ShouldQueue
                 'points_reward' => 30
             ]
         ];
-
-        // Process in chunks to avoid memory issues for large user bases
-        User::chunk(100, function ($users) use ($missions, $today) {
-            $insertData = [];
-            foreach ($users as $user) {
-                foreach ($missions as $mission) {
-                    $insertData[] = [
-                        'user_id' => $user->id,
-                        'mission_type' => $mission['mission_type'],
-                        'target' => $mission['target'],
-                        'points_reward' => $mission['points_reward'],
-                        'progress' => 0,
-                        'is_completed' => false,
-                        'is_claimed' => false,
-                        'date' => $today,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-            }
-            UserMission::insert($insertData);
-        });
     }
 }

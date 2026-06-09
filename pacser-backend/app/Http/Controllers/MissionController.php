@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateDailyMissions;
 use App\Models\UserMission;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,11 @@ class MissionController extends Controller
     public function index(Request $request)
     {
         $today = now()->toDateString();
-        $missions = UserMission::where('user_id', $request->user()->id)
+        $user = $request->user();
+
+        GenerateDailyMissions::ensureForUser($user, $today);
+
+        $missions = UserMission::where('user_id', $user->id)
                                ->where('date', $today)
                                ->get();
 
