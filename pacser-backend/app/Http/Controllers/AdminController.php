@@ -24,7 +24,10 @@ class AdminController extends Controller
 
         if (isset($validated['energy'])) $user->energy = $validated['energy'];
         if (isset($validated['points'])) $user->points = $validated['points'];
-        if (isset($validated['xp'])) $user->xp = $validated['xp'];
+        if (isset($validated['xp'])) {
+            $user->xp = $validated['xp'];
+            $user->weekly_xp = $validated['xp'];
+        }
         if (isset($validated['streak'])) $user->streak = $validated['streak'];
 
         if ($request->has('remove_double_xp') && $request->input('remove_double_xp') === true) {

@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, User } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import api from '../../api/axios'
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -17,6 +18,7 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -27,6 +29,22 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      const unread = res.data.notifications.filter(n => !n.is_read).length;
+      setUnreadCount(unread);
+    } catch (err) {
+      console.error('Failed to fetch notifications');
+    }
+  };
 
   async function handleLogout() {
     await logout()
@@ -72,14 +90,25 @@ export default function Navbar() {
         {user ? (
           <>
             {/* Bell */}
-            <button className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            <button
+              onClick={() => navigate('/notifications')}
+              className="relative text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
               <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900"></span>
+              )}
             </button>
 
             {/* Go Premium */}
-            <button className="px-4 py-1.5 rounded-full text-sm font-bold bg-yellow-500 text-yellow-900 hover:bg-yellow-400 transition-colors shadow-sm">
-              Go Premium
-            </button>
+            {!user.is_premium && (
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-4 py-1.5 rounded-full text-sm font-bold bg-yellow-500 text-yellow-900 hover:bg-yellow-400 transition-colors shadow-sm"
+              >
+                Go Premium
+              </button>
+            )}
 
             {/* Avatar + Dropdown */}
             <div className="relative" ref={dropdownRef}>

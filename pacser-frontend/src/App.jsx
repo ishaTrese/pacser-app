@@ -16,8 +16,10 @@ import Register from './pages/auth/Register'
 import SubjectQuiz from './pages/SubjectQuiz'
 import QuizResults from './pages/QuizResults'
 import PreTest from './pages/PreTest'
+import MockExam from './pages/MockExam'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminQuestionForm from './pages/admin/AdminQuestionForm'
+import Notifications from './pages/Notifications'
 import AdminGodMode from './components/admin/AdminGodMode'
 
 function PlaceholderPage({ title }) {
@@ -90,6 +92,14 @@ function App() {
             )}
           />
           <Route
+            path="/notifications"
+            element={(
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
             path="/leaderboards"
             element={(
               <ProtectedRoute>
@@ -136,6 +146,15 @@ function App() {
             element={(
               <ProtectedRoute>
                 <PreTest />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route
+            path="/mock-exam"
+            element={(
+              <ProtectedRoute>
+                <MockExam />
               </ProtectedRoute>
             )}
           />

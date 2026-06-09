@@ -11,7 +11,7 @@ export default function SubjectDetail() {
   const { subjectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [quizSets, setQuizSets] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +32,7 @@ export default function SubjectDetail() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        
+
         <Breadcrumb items={[
           { label: 'Learn', path: '/learn' },
           { label: subjectId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }
@@ -49,7 +49,7 @@ export default function SubjectDetail() {
               Complete all practice sets to achieve mastery in this subject.
             </p>
           </div>
-          
+
           <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-100 dark:border-yellow-700/50 px-4 py-2 rounded-full shadow-sm shrink-0">
             <Zap size={16} className="text-yellow-500 dark:text-yellow-400 fill-current" />
             <span className="text-yellow-600 dark:text-yellow-200 font-black text-sm tracking-wider">
@@ -61,7 +61,7 @@ export default function SubjectDetail() {
         {/* Quiz Sets List */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 px-1 tracking-tight">Available Quiz Sets</h2>
-          
+
           {loading ? (
             <div className="flex justify-center p-8">
               <p className="text-blue-600 dark:text-blue-400 font-bold animate-pulse">Loading Quiz Sets...</p>
@@ -72,7 +72,7 @@ export default function SubjectDetail() {
             </div>
           ) : (
             quizSets.map((set) => (
-              <div 
+              <div
                 key={set.id}
                 className={`bg-white dark:bg-slate-800 border rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-200 shadow-sm ${
                   set.status === 'locked' ? 'border-slate-200 dark:border-slate-700/50 opacity-75 bg-slate-50 dark:bg-slate-800/50' : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
@@ -88,7 +88,7 @@ export default function SubjectDetail() {
                      set.status === 'locked' ? <Lock size={24} /> :
                      <PlayCircle size={24} />}
                   </div>
-                  
+
                   <div>
                     <h3 className={`font-bold text-lg tracking-tight ${set.status === 'locked' ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
                       {set.title}
@@ -107,11 +107,15 @@ export default function SubjectDetail() {
                       <span className="font-extrabold text-blue-600 dark:text-blue-400 text-lg">{set.score}</span>
                     </div>
                   ) : set.status === 'locked' ? (
-                    <button disabled className="px-6 py-2.5 rounded-lg font-bold bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-sm cursor-not-allowed">
-                      Locked
+                    <button
+                      onClick={() => navigate('/profile')}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20 text-sm transition-colors"
+                      title="Requires Premium Access"
+                    >
+                      Locked (Premium)
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => navigate(`/quiz/${set.id}`, { state: { title: set.title, subjectId: subjectId } })}
                       className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors shadow-sm shadow-blue-600/20"
                     >

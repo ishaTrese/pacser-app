@@ -26,7 +26,7 @@ export default function AdminGodMode() {
       if (res.data.user) {
         updateUserStats(res.data.user);
       }
-      alert('God Mode applied!');
+      window.location.reload();
     } catch (err) {
       alert('Failed to apply stats');
       console.error(err);

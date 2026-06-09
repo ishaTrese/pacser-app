@@ -11,12 +11,7 @@ export default function Shop() {
   const { user, updateUserStats } = useAuth();
   const availablePoints = user?.points || 0;
 
-  const missions = [
-    { title: 'Complete 3 Lessons', current: 0, total: 3, reward: '+50 pts' },
-    { title: 'Score 80% on a Quiz', current: 0, total: 1, reward: '+50 pts' },
-    { title: 'Algebra', current: 0, total: 7, reward: '+50 pts' },
-    { title: 'Governance', current: 0, total: 30, reward: '+50 pts' },
-  ];
+
 
   const perks = [
     { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', cost: 450 },
@@ -80,27 +75,7 @@ export default function Shop() {
         {/* Content Area */}
         <div className="flex-1 flex flex-col">
           
-          {/* Daily Missions */}
-          <div className="mb-8 shrink-0">
-            <h2 className="text-slate-900 dark:text-white text-2xl font-bold mb-4">Daily Missions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {missions.map((mission, idx) => (
-                <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 flex flex-col shadow-lg">
-                  <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-6">{mission.title}</h3>
-                  <div className="w-full bg-slate-100 dark:bg-slate-700 h-3.5 rounded-full mb-4 overflow-hidden shadow-inner">
-                    <div 
-                      className="bg-yellow-500 dark:bg-yellow-400 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${(mission.current / mission.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between items-center mt-auto pt-1">
-                    <span className="text-slate-400 dark:text-slate-500 text-sm font-medium">{mission.current}/{mission.total}</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-bold">{mission.reward}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* Shop Tabs */}
           <div className="flex gap-8 border-b border-slate-200 dark:border-slate-700 mb-6 shrink-0">

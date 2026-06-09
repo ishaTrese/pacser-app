@@ -39,6 +39,10 @@ class User extends Authenticatable
         'inventory_energy_refills',
         'inventory_energy_plus_one',
         'streak_freeze_active',
+        'is_premium',
+        'mock_exam_completed',
+        'rank_id',
+        'weekly_xp',
     ];
 
     /**
@@ -62,5 +66,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function quizLogs()
+    {
+        return $this->hasMany(QuizLog::class);
     }
 }

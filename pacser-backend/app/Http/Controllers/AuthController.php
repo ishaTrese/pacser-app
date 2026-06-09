@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserMission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -59,6 +60,17 @@ class AuthController extends Controller
 
             if ($lastLogin && $lastLogin->diffInDays($today) === 1) {
                 $user->streak += 1;
+
+                // Update maintain_streak mission
+                $mission = UserMission::where('user_id', $user->id)
+                                      ->where('date', $today->toDateString())
+                                      ->where('mission_type', 'maintain_streak')
+                                      ->first();
+                if ($mission && !$mission->is_completed) {
+                    $mission->progress = 1;
+                    $mission->is_completed = true;
+                    $mission->save();
+                }
             } else {
                 $user->streak = 1;
             }
