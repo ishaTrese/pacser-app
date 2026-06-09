@@ -21,16 +21,6 @@ class QuizController extends Controller
             ], 403);
         }
 
-        // Admin accounts bypass the energy system completely
-        if ($user->role !== 'admin') {
-            if ($user->energy <= 0) {
-                return response()->json(['message' => 'Out of energy!'], 403);
-            }
-            // Deduct energy when they start the quiz
-            $user->energy -= 1;
-            $user->save();
-        }
-
         // Load questions and answers randomly, excluding pretest-flagged ones
         $questions = Question::where('quiz_set_id', $quizSet->id)
             ->where('is_pretest', false)
@@ -39,6 +29,16 @@ class QuizController extends Controller
             }])
             ->inRandomOrder()
             ->get();
+
+        // Admin accounts bypass the energy system completely
+        if ($user->role !== 'admin') {
+            if ($user->energy <= 0) {
+                return response()->json(['message' => 'Out of energy!'], 403);
+            }
+            // Deduct energy only after the quiz content is ready to return
+            $user->energy -= 1;
+            $user->save();
+        }
 
         return response()->json([
             'quiz_set' => $quizSet,
