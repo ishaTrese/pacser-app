@@ -13,6 +13,13 @@ class QuizController extends Controller
     public function getQuestions(Request $request, $id)
     {
         $user = $request->user();
+        $quizSet = QuizSet::findOrFail($id);
+
+        if ($user->role !== 'admin' && $quizSet->order_index == 3 && !$user->is_premium) {
+            return response()->json([
+                'message' => 'This quiz set requires Premium access.'
+            ], 403);
+        }
 
         // Admin accounts bypass the energy system completely
         if ($user->role !== 'admin') {
@@ -23,8 +30,6 @@ class QuizController extends Controller
             $user->energy -= 1;
             $user->save();
         }
-
-        $quizSet = QuizSet::findOrFail($id);
 
         // Load questions and answers randomly, excluding pretest-flagged ones
         $questions = Question::where('quiz_set_id', $quizSet->id)
