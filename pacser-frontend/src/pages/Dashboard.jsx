@@ -85,6 +85,16 @@ export default function Dashboard() {
     : canTakeMockExam
       ? 'Use your included free attempt to measure readiness under exam conditions.'
       : 'You have used your free mock exam attempt. Upgrade to Premium to unlock unlimited retakes.'
+  const formatMockResult = (result) => {
+    if (!result) return 'No attempts yet'
+    return `${result.percentage}% (${result.score}/${result.total_items})`
+  }
+  const mockExamLevelLabel = userClass || 'Select a category'
+  const mockExamDuration = userClass === 'Professional'
+    ? '170 items to be completed in 3 hours and 10 minutes.'
+    : userClass === 'Sub-Professional'
+      ? '165 items to be completed in 2 hours and 40 minutes.'
+      : 'Choose Professional or Sub-Professional to start a full-length mock exam.'
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -218,7 +228,7 @@ export default function Dashboard() {
         </div>
 
         {/* Mock Exam CTA at Bottom */}
-        {userClass && (
+        {stats.mock_exam && (
           <div className={`mt-8 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg ${
             canTakeMockExam
               ? 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-blue-600/20'
@@ -231,8 +241,8 @@ export default function Dashboard() {
               </h2>
               <div className={`space-y-2 mb-4 p-4 rounded-lg border ${canTakeMockExam ? 'bg-white/10 border-white/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
                 <p className={`font-bold text-sm md:text-base ${canTakeMockExam ? 'text-blue-50' : 'text-slate-700 dark:text-slate-200'}`}>
-                  <span className={canTakeMockExam ? 'text-yellow-400' : 'text-blue-600 dark:text-blue-400'}>{userClass} Level:</span>
-                  {userClass === 'Professional' ? ' 170 items to be completed in 3 hours and 10 minutes.' : ' 165 items to be completed in 2 hours and 40 minutes.'}
+                  <span className={canTakeMockExam ? 'text-yellow-400' : 'text-blue-600 dark:text-blue-400'}>{mockExamLevelLabel}:</span>
+                  {' '}{mockExamDuration}
                 </p>
                 <p className={`text-xs font-black uppercase tracking-widest ${canTakeMockExam ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
                   {mockExamStatusLabel}
@@ -242,14 +252,37 @@ export default function Dashboard() {
               <p className={`font-medium max-w-2xl text-sm leading-relaxed ${canTakeMockExam ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
                 {mockExamDescription}
               </p>
+              {mockExam.attempt_count > 0 && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                  <div className={`rounded-lg px-4 py-3 border ${canTakeMockExam ? 'bg-white/10 border-white/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${canTakeMockExam ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>Best Score</p>
+                    <p className={`text-sm font-black ${canTakeMockExam ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                      {formatMockResult(mockExam.best_result)}
+                    </p>
+                  </div>
+                  <div className={`rounded-lg px-4 py-3 border ${canTakeMockExam ? 'bg-white/10 border-white/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${canTakeMockExam ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>Latest Attempt</p>
+                    <p className={`text-sm font-black ${canTakeMockExam ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                      {formatMockResult(mockExam.latest_result)}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
-              {canTakeMockExam ? (
+              {canTakeMockExam && userClass ? (
                 <button
                   onClick={() => navigate(`/mock-exam?level=${userClass.toLowerCase()}`)}
                   className="w-full bg-white text-blue-700 hover:bg-blue-50 font-black px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-widest text-sm"
                 >
                   {isPremiumMockUser && mockExam.attempt_count > 0 ? 'Retake Mock Exam' : 'Take Mock Exam'}
+                </button>
+              ) : canTakeMockExam ? (
+                <button
+                  onClick={() => navigate('/select-class')}
+                  className="w-full bg-white text-blue-700 hover:bg-blue-50 font-black px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-widest text-sm"
+                >
+                  Select Category
                 </button>
               ) : (
                 <button

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AccessCode;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -44,6 +45,7 @@ class UserController extends Controller
 
         // Calculate Level (using the same formula as frontend: Math.floor(0.1 * Math.sqrt(xp)) + 1)
         $level = floor(0.1 * sqrt($user->xp)) + 1;
+        $mockExamAnalytics = $this->getMockExamAnalytics($user->id);
 
         // Compute Badges based on user stats
         $badges = [
@@ -75,9 +77,10 @@ class UserController extends Controller
                 'total_lessons' => $totalLessons,
                 'accuracy' => $accuracy,
                 'streak' => $user->streak,
-                'mock_exams_taken' => $user->mock_exam_completed ? 1 : 0, // Mock for now
+                'mock_exams_taken' => $mockExamAnalytics['attempt_count'],
                 'rank' => $rank,
             ],
+            'mock_exam' => $mockExamAnalytics,
             'badges' => $badges,
             'user' => $user
         ]);
@@ -143,5 +146,54 @@ class UserController extends Controller
             'message' => 'Code redeemed successfully! You are now a Premium user.',
             'user' => $user
         ]);
+    }
+
+    private function getMockExamAnalytics(int $userId): array
+    {
+        $results = DB::table('mock_exam_results')
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $latestResult = $results->first();
+        $bestResult = $results
+            ->sortByDesc(function ($result) {
+                return $this->mockExamPercentage($result);
+            })
+            ->first();
+
+        return [
+            'attempt_count' => $results->count(),
+            'best_result' => $this->formatMockExamResult($bestResult),
+            'latest_result' => $this->formatMockExamResult($latestResult),
+        ];
+    }
+
+    private function formatMockExamResult($result): ?array
+    {
+        if (!$result) {
+            return null;
+        }
+
+        $percentage = $this->mockExamPercentage($result);
+
+        return [
+            'id' => $result->id,
+            'score' => (int) $result->total_score,
+            'total_items' => (int) $result->total_items,
+            'percentage' => $percentage,
+            'passed' => $percentage >= 80,
+            'taken_at' => $result->created_at,
+        ];
+    }
+
+    private function mockExamPercentage($result): float
+    {
+        if (!$result || (int) $result->total_items <= 0) {
+            return 0;
+        }
+
+        return round(((int) $result->total_score / (int) $result->total_items) * 100, 1);
     }
 }

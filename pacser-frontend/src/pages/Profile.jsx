@@ -9,6 +9,7 @@ export default function Profile() {
   const { user, updateUserStats } = useAuth();
   const [activeTab, setActiveTab] = useState('Overview');
   const [stats, setStats] = useState(null);
+  const [mockExam, setMockExam] = useState(null);
   const [badges, setBadges] = useState([]);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,7 @@ export default function Profile() {
     try {
       const res = await api.get('/profile/stats');
       setStats(res.data.stats);
+      setMockExam(res.data.mock_exam || null);
       setBadges(res.data.badges);
       if (res.data.user) {
         updateUserStats(res.data.user);
@@ -93,6 +95,11 @@ export default function Profile() {
     { color: 'text-pink-400', bg: 'border-pink-500/30' },
     { color: 'text-orange-400', bg: 'border-orange-500/30' },
   ];
+
+  const formatMockResult = (result) => {
+    if (!result) return 'No attempts yet';
+    return `${result.percentage}% (${result.score}/${result.total_items})`;
+  };
 
 
 
@@ -188,6 +195,28 @@ export default function Profile() {
                       <span className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest">Mock Exams Taken</span>
                     </div>
                   </div>
+
+                  {mockExam?.attempt_count > 0 && (
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
+                      <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                        <Target size={20} className="text-blue-500" />
+                        Mock Exam Performance
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Best Score</p>
+                          <p className="text-slate-900 dark:text-white font-black text-xl">{formatMockResult(mockExam.best_result)}</p>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Latest Attempt</p>
+                          <p className="text-slate-900 dark:text-white font-black text-xl">{formatMockResult(mockExam.latest_result)}</p>
+                          <p className={`text-xs font-bold uppercase tracking-widest mt-2 ${mockExam.latest_result?.passed ? 'text-emerald-500' : 'text-amber-500'}`}>
+                            {mockExam.latest_result?.passed ? 'Passed' : 'Needs Review'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Rank Perks Section */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">

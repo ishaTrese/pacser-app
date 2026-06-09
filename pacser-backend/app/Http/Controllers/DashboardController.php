@@ -37,6 +37,7 @@ class DashboardController extends Controller
         $mockExamAttemptCount = DB::table('mock_exam_results')
             ->where('user_id', $userId)
             ->count();
+        $mockExamAnalytics = $this->getMockExamAnalytics($userId);
         $isPremium = (bool) $user->is_premium;
 
         return response()->json([
@@ -47,9 +48,59 @@ class DashboardController extends Controller
                 'can_take_mock_exam' => $isPremium || $mockExamAttemptCount < 1,
                 'attempts_remaining' => $isPremium ? null : max(0, 1 - $mockExamAttemptCount),
                 'is_premium' => $isPremium,
+                'best_result' => $mockExamAnalytics['best_result'],
+                'latest_result' => $mockExamAnalytics['latest_result'],
             ],
             // Include user data too so the frontend can refresh user state if needed
             'user' => $user
         ]);
+    }
+
+    private function getMockExamAnalytics(int $userId): array
+    {
+        $results = DB::table('mock_exam_results')
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $latestResult = $results->first();
+        $bestResult = $results
+            ->sortByDesc(function ($result) {
+                return $this->mockExamPercentage($result);
+            })
+            ->first();
+
+        return [
+            'best_result' => $this->formatMockExamResult($bestResult),
+            'latest_result' => $this->formatMockExamResult($latestResult),
+        ];
+    }
+
+    private function formatMockExamResult($result): ?array
+    {
+        if (!$result) {
+            return null;
+        }
+
+        $percentage = $this->mockExamPercentage($result);
+
+        return [
+            'id' => $result->id,
+            'score' => (int) $result->total_score,
+            'total_items' => (int) $result->total_items,
+            'percentage' => $percentage,
+            'passed' => $percentage >= 80,
+            'taken_at' => $result->created_at,
+        ];
+    }
+
+    private function mockExamPercentage($result): float
+    {
+        if (!$result || (int) $result->total_items <= 0) {
+            return 0;
+        }
+
+        return round(((int) $result->total_score / (int) $result->total_items) * 100, 1);
     }
 }
