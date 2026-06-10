@@ -10,12 +10,13 @@ import CategoryBadge from '../components/ui/CategoryBadge';
 export default function SubjectDetail() {
   const { subjectId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUserStats } = useAuth();
 
   const [quizSets, setQuizSets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const hasEnergy = user?.role === 'admin' || (user?.energy ?? 0) > 0;
-  const needsEnergy = user && !hasEnergy;
+  const currentEnergy = Number(user?.energy ?? 0);
+  const hasEnergy = user?.role === 'admin' || currentEnergy > 0;
+  const needsEnergy = Boolean(user && user.role !== 'admin' && !hasEnergy);
 
   const startQuiz = (set) => {
     if (needsEnergy) {
@@ -43,9 +44,19 @@ export default function SubjectDetail() {
   };
 
   useEffect(() => {
-    api.get(`/subjects/${subjectId}/quiz-sets`)
-      .then(response => {
+    const requests = [api.get(`/subjects/${subjectId}/quiz-sets`)];
+
+    if (user) {
+      requests.push(api.get('/user'));
+    }
+
+    Promise.all(requests)
+      .then(([response, userResponse]) => {
         setQuizSets(response.data.quiz_sets);
+
+        if (userResponse?.data) {
+          updateUserStats(userResponse.data);
+        }
       })
       .catch(error => {
         console.error("Error fetching quiz sets", error);
@@ -53,7 +64,7 @@ export default function SubjectDetail() {
       .finally(() => {
         setLoading(false);
       });
-  }, [subjectId]);
+  }, [subjectId, user?.id]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">

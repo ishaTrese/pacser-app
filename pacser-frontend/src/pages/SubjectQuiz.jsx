@@ -20,11 +20,13 @@ export default function SubjectQuiz() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [outOfEnergy, setOutOfEnergy] = useState(false);
+  const [accessError, setAccessError] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [timerExpired, setTimerExpired] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const scoreRef = useRef(0);
   const submittingRef = useRef(false);
+  const attemptIdRef = useRef(null);
 
   // Fallback info if we navigated directly without state
   const quizTitle = location.state?.title || `Quiz Set ${quizSetId}`;
@@ -46,6 +48,7 @@ export default function SubjectQuiz() {
 
     api.post('/quiz/submit', {
       quiz_set_id: quizSetId,
+      attempt_id: attemptIdRef.current,
       score: finalScore,
       total: questions.length
     }).then((res) => {
@@ -78,13 +81,17 @@ export default function SubjectQuiz() {
   }, [navigate, questions.length, quizSetId, resolvedSubjectId, updateUserStats, user]);
 
   useEffect(() => {
-    api.get(`/quiz-sets/${quizSetId}/questions`)
+    api.post(`/quiz-sets/${quizSetId}/start`)
       .then(response => {
+        attemptIdRef.current = response.data.attempt_id || null;
         setQuizSet(response.data.quiz_set);
         
-        // Sync the local energy drop
-        if (user && user.role !== 'admin' && user.energy > 0) {
-          updateUserStats({ energy: user.energy - 1 });
+        // Sync server-confirmed energy after starting or reusing an attempt.
+        if (user && user.role !== 'admin' && typeof response.data.user_energy === 'number') {
+          updateUserStats({
+            energy: response.data.user_energy,
+            max_energy: response.data.user_max_energy ?? user.max_energy
+          });
         }
 
         // Map backend questions to frontend format
@@ -107,7 +114,9 @@ export default function SubjectQuiz() {
       })
       .catch(error => {
         if (error.response?.status === 403) {
-          setOutOfEnergy(true);
+          const message = error.response?.data?.message || 'You cannot start this quiz right now.';
+          setAccessError(message);
+          setOutOfEnergy(message.toLowerCase().includes('energy'));
         } else {
           console.error("Error fetching questions:", error);
         }
@@ -138,7 +147,7 @@ export default function SubjectQuiz() {
     return () => clearInterval(interval);
   }, [hasTimer, loading, outOfEnergy, questions.length, submitQuiz, submitting, timerExpired, timeRemaining]);
 
-  if (outOfEnergy) {
+  if (accessError) {
     return (
       <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
         <Navbar />
@@ -147,14 +156,18 @@ export default function SubjectQuiz() {
             <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Zap size={32} className="text-yellow-500 fill-current" />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-4">Out of Energy!</h2>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-4">
+              {outOfEnergy ? 'Out of Energy!' : 'Quiz Unavailable'}
+            </h2>
             <p className="text-slate-600 mb-8 leading-relaxed">
-              You've used up all your energy for today. Wait for the daily reset or purchase an Energy Refill from the Shop.
+              {accessError}
             </p>
             <div className="space-y-3">
-              <button onClick={() => navigate('/shop')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-md">
-                Visit Shop
-              </button>
+              {outOfEnergy && (
+                <button onClick={() => navigate('/shop')} className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-md">
+                  Visit Shop
+                </button>
+              )}
               <button onClick={() => navigate('/dashboard')} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all">
                 Back to Dashboard
               </button>
