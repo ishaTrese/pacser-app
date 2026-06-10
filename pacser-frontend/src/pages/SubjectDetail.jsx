@@ -25,6 +25,11 @@ export default function SubjectDetail() {
 
     return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-700/50';
   };
+  const formatResult = (result) => {
+    if (!result) return null;
+
+    return `${result.percentage}% (${result.score}/${result.total})`;
+  };
 
   useEffect(() => {
     api.get(`/subjects/${subjectId}/quiz-sets`)
@@ -126,15 +131,33 @@ export default function SubjectDetail() {
                         {set.has_timer ? `Timed Challenge${set.time ? ` - ${set.time}` : ''}` : 'Untimed'}
                       </span>
                     </div>
+                    {set.attempt_count > 0 && (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Attempts</p>
+                          <p className="text-xs font-black text-slate-700 dark:text-slate-200">{set.attempt_count}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Best</p>
+                          <p className="text-xs font-black text-blue-600 dark:text-blue-400">{formatResult(set.best_result) || '--'}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Latest</p>
+                          <p className="text-xs font-black text-slate-700 dark:text-slate-200">{formatResult(set.latest_result) || '--'}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="w-full sm:w-auto flex items-center justify-end">
+                <div className="w-full sm:w-auto flex flex-col items-stretch sm:items-end justify-end gap-2">
                   {set.status === 'completed' ? (
-                    <div className="text-right">
-                      <span className="block text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Score</span>
-                      <span className="font-extrabold text-blue-600 dark:text-blue-400 text-lg">{set.score}</span>
-                    </div>
+                    <button
+                      onClick={() => navigate(`/quiz/${set.id}`, { state: { title: set.title, subjectId: subjectId } })}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors shadow-sm shadow-blue-600/20"
+                    >
+                      Retry Quiz
+                    </button>
                   ) : set.status === 'locked' ? (
                     <button
                       onClick={() => navigate('/profile')}
