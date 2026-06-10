@@ -14,6 +14,17 @@ export default function SubjectDetail() {
 
   const [quizSets, setQuizSets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const hasEnergy = user?.role === 'admin' || (user?.energy ?? 0) > 0;
+  const needsEnergy = user && !hasEnergy;
+
+  const startQuiz = (set) => {
+    if (needsEnergy) {
+      return;
+    }
+
+    navigate(`/quiz/${set.id}`, { state: { title: set.title, subjectId: subjectId } });
+  };
+
   const getDifficultyBadgeClass = (difficulty) => {
     if (difficulty === 'easy') {
       return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-700/50';
@@ -153,10 +164,15 @@ export default function SubjectDetail() {
                 <div className="w-full sm:w-auto flex flex-col items-stretch sm:items-end justify-end gap-2">
                   {set.status === 'completed' ? (
                     <button
-                      onClick={() => navigate(`/quiz/${set.id}`, { state: { title: set.title, subjectId: subjectId } })}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors shadow-sm shadow-blue-600/20"
+                      onClick={() => startQuiz(set)}
+                      disabled={needsEnergy}
+                      className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm ${
+                        needsEnergy
+                          ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
+                      }`}
                     >
-                      Retry Quiz
+                      {needsEnergy ? 'Energy Required' : 'Retry Quiz'}
                     </button>
                   ) : set.status === 'locked' ? (
                     <button
@@ -168,11 +184,21 @@ export default function SubjectDetail() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => navigate(`/quiz/${set.id}`, { state: { title: set.title, subjectId: subjectId } })}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors shadow-sm shadow-blue-600/20"
+                      onClick={() => startQuiz(set)}
+                      disabled={needsEnergy}
+                      className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm ${
+                        needsEnergy
+                          ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
+                      }`}
                     >
-                      Start Quiz
+                      {needsEnergy ? 'Energy Required' : 'Start Quiz'}
                     </button>
+                  )}
+                  {needsEnergy && set.status !== 'locked' && (
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 text-center sm:text-right">
+                      Restore energy before starting this quiz.
+                    </p>
                   )}
                 </div>
               </div>

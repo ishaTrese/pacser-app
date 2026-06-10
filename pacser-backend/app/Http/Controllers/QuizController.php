@@ -45,8 +45,15 @@ class QuizController extends Controller
             $user->save();
         }
 
+        $difficulty = $this->normalizeDifficulty($quizSet->difficulty);
+        $timeLimitSeconds = $difficulty === 'difficult' ? $questions->count() * 60 : null;
+
         return response()->json([
-            'quiz_set' => $quizSet,
+            'quiz_set' => array_merge($quizSet->toArray(), [
+                'difficulty' => $difficulty,
+                'has_timer' => $difficulty === 'difficult',
+                'time_limit_seconds' => $timeLimitSeconds,
+            ]),
             'questions' => $questions
         ]);
     }

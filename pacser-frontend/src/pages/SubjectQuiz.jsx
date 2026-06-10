@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/layout/Breadcrumb';
-import { Zap, CheckCircle2, XCircle } from 'lucide-react';
+import { Zap, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,10 +20,62 @@ export default function SubjectQuiz() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [outOfEnergy, setOutOfEnergy] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timerExpired, setTimerExpired] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const scoreRef = useRef(0);
+  const submittingRef = useRef(false);
 
   // Fallback info if we navigated directly without state
   const quizTitle = location.state?.title || `Quiz Set ${quizSetId}`;
   const resolvedSubjectId = String(location.state?.subjectId || 'numerical-ability');
+  const hasTimer = Boolean(quizSet?.has_timer && quizSet?.difficulty === 'difficult');
+
+  const formatTime = (seconds) => {
+    const safeSeconds = Math.max(0, seconds || 0);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const submitQuiz = useCallback((finalScore = scoreRef.current) => {
+    if (submittingRef.current || questions.length === 0) return;
+
+    submittingRef.current = true;
+    setSubmitting(true);
+
+    api.post('/quiz/submit', {
+      quiz_set_id: quizSetId,
+      score: finalScore,
+      total: questions.length
+    }).then((res) => {
+      if (user) {
+        updateUserStats({
+          xp: user.xp + res.data.xp_gained,
+          points: user.points + res.data.points_gained
+        });
+      }
+      navigate(`/quiz/${quizSetId}/results`, {
+        state: {
+          score: res.data.log.score,
+          total: res.data.log.total,
+          percentage: res.data.log.percentage,
+          xp_gained: res.data.xp_gained,
+          points_gained: res.data.points_gained,
+          difficulty: res.data.difficulty,
+          difficulty_multiplier: res.data.difficulty_multiplier,
+          base_xp: res.data.base_xp,
+          awarded_xp: res.data.awarded_xp,
+          base_points: res.data.base_points,
+          awarded_points: res.data.awarded_points,
+          subjectId: resolvedSubjectId
+        }
+      });
+    }).catch(err => {
+      console.error("Error submitting quiz", err);
+      navigate(`/quiz/${quizSetId}/results`, { state: { score: finalScore, total: questions.length, subjectId: resolvedSubjectId } });
+    });
+  }, [navigate, questions.length, quizSetId, resolvedSubjectId, updateUserStats, user]);
 
   useEffect(() => {
     api.get(`/quiz-sets/${quizSetId}/questions`)
@@ -49,6 +101,9 @@ export default function SubjectQuiz() {
         }));
 
         setQuestions(formattedQuestions);
+        if (response.data.quiz_set?.has_timer && response.data.quiz_set?.difficulty === 'difficult') {
+          setTimeRemaining(response.data.quiz_set.time_limit_seconds || 0);
+        }
       })
       .catch(error => {
         if (error.response?.status === 403) {
@@ -59,6 +114,29 @@ export default function SubjectQuiz() {
       })
       .finally(() => setLoading(false));
   }, [quizSetId]);
+
+  useEffect(() => {
+    if (!hasTimer || loading || outOfEnergy || questions.length === 0 || submitting || timerExpired || timeRemaining === null) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev === null) return prev;
+
+        if (prev <= 1) {
+          clearInterval(interval);
+          setTimerExpired(true);
+          submitQuiz(scoreRef.current);
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [hasTimer, loading, outOfEnergy, questions.length, submitQuiz, submitting, timerExpired, timeRemaining]);
 
   if (outOfEnergy) {
     return (
@@ -112,58 +190,32 @@ export default function SubjectQuiz() {
   const currentQuestion = questions[currentIndex];
 
   const handleSelectOption = (optionId) => {
-    if (isSubmitted) return;
+    if (isSubmitted || timerExpired || submitting) return;
     setSelectedOption(optionId);
   };
 
   const handleSubmit = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || timerExpired || submitting) return;
     setIsSubmitted(true);
     
     if (selectedOption === currentQuestion.correct_answer) {
-      setScore(prev => prev + 1);
+      setScore(prev => {
+        const nextScore = prev + 1;
+        scoreRef.current = nextScore;
+        return nextScore;
+      });
     }
   };
 
   const handleNext = () => {
+    if (timerExpired || submitting) return;
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setSelectedOption(null);
       setIsSubmitted(false);
     } else {
-      // Post score to backend
-      api.post('/quiz/submit', {
-        quiz_set_id: quizSetId,
-        score: score, // Removed duplicate addition here!
-        total: questions.length
-      }).then((res) => {
-        if (user) {
-          updateUserStats({
-            xp: user.xp + res.data.xp_gained,
-            points: user.points + res.data.points_gained
-          });
-        }
-        navigate(`/quiz/${quizSetId}/results`, { 
-          state: { 
-            score: res.data.log.score, 
-            total: res.data.log.total,
-            percentage: res.data.log.percentage,
-            xp_gained: res.data.xp_gained,
-            points_gained: res.data.points_gained,
-            difficulty: res.data.difficulty,
-            difficulty_multiplier: res.data.difficulty_multiplier,
-            base_xp: res.data.base_xp,
-            awarded_xp: res.data.awarded_xp,
-            base_points: res.data.base_points,
-            awarded_points: res.data.awarded_points,
-            subjectId: resolvedSubjectId // Pass string slug to results so Retry works
-          } 
-        });
-      }).catch(err => {
-        console.error("Error submitting quiz", err);
-        // Fallback navigation if offline or error
-        navigate(`/quiz/${quizSetId}/results`, { state: { score, total: questions.length, subjectId: resolvedSubjectId } });
-      });
+      submitQuiz(scoreRef.current);
     }
   };
 
@@ -182,16 +234,30 @@ export default function SubjectQuiz() {
         ]} />
 
         {/* Quiz Header with Energy */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {quizSet?.name || quizTitle}
           </h1>
           
-          <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-100 dark:border-yellow-700/50 px-4 py-2 rounded-full shadow-sm">
-            <Zap size={16} className="text-yellow-500 dark:text-yellow-400 fill-current" />
-            <span className="text-yellow-600 dark:text-yellow-200 font-black text-sm tracking-wider">
-              {user ? `${user.energy} / ${user.max_energy}` : '-- / --'} Energy
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasTimer && (
+              <div className={`flex items-center gap-2 border px-4 py-2 rounded-full shadow-sm ${
+                timeRemaining <= 60
+                  ? 'bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-700/50'
+                  : 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-700/50'
+              }`}>
+                <Clock size={16} className={timeRemaining <= 60 ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} />
+                <span className={`font-black text-sm tracking-wider ${timeRemaining <= 60 ? 'text-red-600 dark:text-red-300' : 'text-blue-600 dark:text-blue-300'}`}>
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-100 dark:border-yellow-700/50 px-4 py-2 rounded-full shadow-sm">
+              <Zap size={16} className="text-yellow-500 dark:text-yellow-400 fill-current" />
+              <span className="text-yellow-600 dark:text-yellow-200 font-black text-sm tracking-wider">
+                {user ? `${user.energy} / ${user.max_energy}` : '-- / --'} Energy
+              </span>
+            </div>
           </div>
         </div>
 
@@ -240,7 +306,7 @@ export default function SubjectQuiz() {
                 <button
                   key={option.id}
                   onClick={() => handleSelectOption(option.id)}
-                  disabled={isSubmitted}
+                  disabled={isSubmitted || timerExpired || submitting}
                   className={btnClass}
                 >
                   <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black mr-4 text-sm ${
@@ -273,21 +339,22 @@ export default function SubjectQuiz() {
             {!isSubmitted ? (
               <button 
                 onClick={handleSubmit}
-                disabled={!selectedOption}
+                disabled={!selectedOption || timerExpired || submitting}
                 className={`px-8 py-3.5 rounded-xl font-bold transition-all text-sm shadow-sm ${
-                  selectedOption 
+                  selectedOption && !timerExpired && !submitting
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20' 
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                 }`}
               >
-                Submit Answer
+                {timerExpired ? 'Time Expired' : 'Submit Answer'}
               </button>
             ) : (
               <button 
                 onClick={handleNext}
+                disabled={timerExpired || submitting}
                 className="px-8 py-3.5 rounded-xl font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 shadow-md text-sm transition-colors flex items-center gap-2"
               >
-                {currentIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                {submitting ? 'Submitting...' : currentIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
               </button>
             )}
