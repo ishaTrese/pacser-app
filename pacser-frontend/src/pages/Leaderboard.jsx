@@ -11,6 +11,7 @@ export default function Leaderboard() {
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [weeklyLeague, setWeeklyLeague] = useState(null);
+  const [allTimeCurrentUser, setAllTimeCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [userRankName, setUserRankName] = useState('Applicant');
@@ -21,6 +22,7 @@ export default function Leaderboard() {
         setWeeklyLeaderboard(res.data.leaderboard);
         setAllTimeLeaderboard(res.data.all_time_leaderboard);
         setWeeklyLeague(res.data.weekly_league || null);
+        setAllTimeCurrentUser(res.data.all_time_current_user || null);
 
         const rankNames = {
           1: 'Applicant',
@@ -49,8 +51,12 @@ export default function Leaderboard() {
 
   const CURRENT_USER = {
     name: user ? `${user.first_name} ${user.last_name}` : 'Anna Doe',
-    rank: isWeekly ? (weeklyLeague?.current_user_position || userRank) : userRank,
-    xp: activeTab === 'Weekly' ? (user?.weekly_xp || 0) : (user?.xp || 0),
+    rank: isWeekly ? (weeklyLeague?.current_user_position || userRank) : (allTimeCurrentUser?.position || userRank),
+    xp: activeTab === 'Weekly' ? (weeklyLeague?.weekly_xp ?? user?.weekly_xp ?? 0) : (allTimeCurrentUser?.xp ?? user?.xp ?? 0),
+    points: isWeekly ? null : allTimeCurrentUser?.points,
+    level: isWeekly ? null : allTimeCurrentUser?.level,
+    rankName: isWeekly ? weeklyLeague?.rank_name : allTimeCurrentUser?.rank_name,
+    streak: isWeekly ? null : allTimeCurrentUser?.streak,
   };
 
   const formatWeekDate = (dateString) => {
@@ -215,6 +221,11 @@ export default function Leaderboard() {
                         {topThree[1].first_name}
                         {topThree[1].id === user?.id && <span className="ml-1 text-[10px] text-blue-600 dark:text-blue-400">You</span>}
                       </p>
+                      {!isWeekly && (
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate w-full text-center">
+                          Lv {topThree[1].level} - {topThree[1].rank_name}
+                        </p>
+                      )}
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3">
                         {activeTab === 'Weekly' ? topThree[1].weekly_xp : topThree[1].xp} XP
                       </p>
@@ -235,6 +246,11 @@ export default function Leaderboard() {
                         {topThree[0].first_name}
                         {topThree[0].id === user?.id && <span className="ml-1 text-[10px] text-blue-600 dark:text-blue-400">You</span>}
                       </p>
+                      {!isWeekly && (
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate w-full text-center">
+                          Lv {topThree[0].level} - {topThree[0].rank_name}
+                        </p>
+                      )}
                       <p className="text-sm font-black text-yellow-600 dark:text-yellow-400 mb-3">
                         {activeTab === 'Weekly' ? topThree[0].weekly_xp : topThree[0].xp} XP
                       </p>
@@ -254,6 +270,11 @@ export default function Leaderboard() {
                         {topThree[2].first_name}
                         {topThree[2].id === user?.id && <span className="ml-1 text-[10px] text-blue-600 dark:text-blue-400">You</span>}
                       </p>
+                      {!isWeekly && (
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate w-full text-center">
+                          Lv {topThree[2].level} - {topThree[2].rank_name}
+                        </p>
+                      )}
                       <p className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-3">
                         {activeTab === 'Weekly' ? topThree[2].weekly_xp : topThree[2].xp} XP
                       </p>
@@ -293,6 +314,14 @@ export default function Leaderboard() {
                                 {zoneLabel(u.zone_status)}
                               </span>
                             )}
+                            {!isWeekly && (
+                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                <span>Lv {u.level || 1}</span>
+                                <span>{u.rank_name || 'Applicant'}</span>
+                                <span>{u.points || 0} pts</span>
+                                <span>{u.streak || 0} streak</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span className="font-bold text-slate-600 dark:text-slate-300 sm:text-right">
@@ -325,7 +354,16 @@ export default function Leaderboard() {
               </div>
               <div>
                 <p className="text-white font-bold text-sm">{CURRENT_USER.name}</p>
-                <p className="text-slate-400 text-xs font-medium">You</p>
+                <p className="text-slate-400 text-xs font-medium">
+                  {isWeekly
+                    ? 'You'
+                    : `You - Lv ${CURRENT_USER.level || 1} - ${CURRENT_USER.rankName || 'Applicant'}`}
+                </p>
+                {!isWeekly && (
+                  <p className="text-slate-500 text-[11px] font-bold mt-0.5">
+                    {CURRENT_USER.points || 0} pts - {CURRENT_USER.streak || 0} streak
+                  </p>
+                )}
               </div>
             </div>
             <div className="text-right">

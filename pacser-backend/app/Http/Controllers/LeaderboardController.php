@@ -93,6 +93,15 @@ class LeaderboardController extends Controller
                     'zone_status' => null,
                 ];
             });
+        $allTimePosition = User::where(function ($query) use ($user) {
+                $query->where('xp', '>', $user->xp)
+                    ->orWhere(function ($tieQuery) use ($user) {
+                        $tieQuery->where('xp', $user->xp)
+                            ->where('id', '<', $user->id);
+                    });
+            })
+            ->count() + 1;
+        $allTimeCurrentUser = $this->formatAllTimeCurrentUser($user, $rankNames, $allTimePosition);
 
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd = Carbon::now()->endOfWeek();
@@ -103,6 +112,7 @@ class LeaderboardController extends Controller
         return response()->json([
             'leaderboard' => $weeklyRows,
             'all_time_leaderboard' => $allTimeUsers,
+            'all_time_current_user' => $allTimeCurrentUser,
             'current_user_rank' => (int) $user->rank_id,
             'weekly_league' => [
                 'rank_id' => (int) $user->rank_id,
@@ -150,6 +160,23 @@ class LeaderboardController extends Controller
             6 => 'Secretary',
             7 => 'Commissioner',
             8 => 'Civil Service Champion',
+        ];
+    }
+
+    private function formatAllTimeCurrentUser(User $user, array $rankNames, int $position): array
+    {
+        $rankId = (int) $user->rank_id;
+
+        return [
+            'position' => $position,
+            'id' => (int) $user->id,
+            'name' => trim($user->first_name . ' ' . $user->last_name),
+            'xp' => (int) $user->xp,
+            'points' => (int) ($user->points ?? 0),
+            'level' => $this->levelFromXp((int) $user->xp),
+            'rank_id' => $rankId,
+            'rank_name' => $rankNames[$rankId] ?? 'Applicant',
+            'streak' => (int) $user->streak,
         ];
     }
 
