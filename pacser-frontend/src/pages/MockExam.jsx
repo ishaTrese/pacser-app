@@ -15,12 +15,16 @@ export default function MockExam() {
 
   // Constants
   const isProfessional = level === 'professional';
+  const levelLabel = isProfessional ? 'Professional' : 'Sub-Professional';
   const totalItems = isProfessional ? 170 : 165;
   const passingScore = isProfessional ? 136 : 132;
   const initialTime = isProfessional ? (3 * 60 * 60) + (10 * 60) : (2 * 60 * 60) + (40 * 60);
+  const timeLimitLabel = isProfessional ? '3 hours and 10 minutes' : '2 hours and 40 minutes';
 
   const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [finished, setFinished] = useState(false);
@@ -36,28 +40,50 @@ export default function MockExam() {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // If user already finished mock exam and didn't just finish it now, kick them out
-    if (user?.mock_exam_completed && !user?.is_premium && !justCompleted.current) {
-      navigate('/dashboard', { replace: true });
-      return;
-    }
-
-    if (!justCompleted.current) {
-      api.get(`/mock-exam/questions?level=${level}`)
-        .then(res => {
-          setQuestions(res.data.questions);
-          setLoading(false);
-          startTimer();
-        })
-        .catch(err => {
-          console.error("Failed to load mock exam", err);
-        });
-    }
-
     return () => clearInterval(timerRef.current);
-  }, [user, navigate, level]);
+  }, []);
+
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    setStarted(false);
+    setLoading(false);
+    setLoadError('');
+    setQuestions([]);
+    setAnswers({});
+    setCurrentIndex(0);
+    setTimeLeft(initialTime);
+  }, [level, initialTime]);
+
+  const handleStartExam = async () => {
+    if (loading || started) return;
+
+    setLoading(true);
+    setLoadError('');
+
+    try {
+      const res = await api.get(`/mock-exam/questions?level=${level}`);
+      const loadedQuestions = res.data.questions || [];
+
+      if (loadedQuestions.length === 0) {
+        throw new Error('No mock exam questions are available for this level yet.');
+      }
+
+      setQuestions(loadedQuestions);
+      setCurrentIndex(0);
+      setAnswers({});
+      setTimeLeft(initialTime);
+      setStarted(true);
+      startTimer();
+    } catch (err) {
+      console.error("Failed to load mock exam", err);
+      setLoadError(err.response?.data?.message || err.message || 'Failed to load mock exam. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startTimer = () => {
+    clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -170,10 +196,6 @@ export default function MockExam() {
     return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading {totalItems}-Item Mock Exam...</div>;
-  }
-
   if (finished && results) {
     const isPassed = results.totalScore >= passingScore;
     const percentage = ((results.totalScore / totalItems) * 100).toFixed(1);
@@ -242,6 +264,92 @@ export default function MockExam() {
           >
             Enter Dashboard <ChevronRight size={20} />
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!started) {
+    const attemptRule = user?.is_premium
+      ? 'Premium users have unlimited mock exam attempts.'
+      : user?.mock_exam_completed
+        ? 'You have used your free mock exam attempt. Upgrade to Premium for unlimited retakes.'
+        : 'You have 1 free mock exam attempt.';
+    const startLabel = user?.is_premium && user?.mock_exam_completed ? 'Start Retake' : 'Start Mock Exam';
+
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-3xl w-full p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-8">
+            <div>
+              <p className="text-blue-600 font-black text-xs uppercase tracking-widest mb-2">{levelLabel} Level</p>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Full-Length Mock Exam</h1>
+              <p className="text-slate-500 font-medium mt-2 max-w-xl">
+                Review the rules before you begin. Your timer starts only after the questions are loaded.
+              </p>
+            </div>
+            <div className="bg-blue-50 text-blue-700 rounded-2xl px-4 py-3 border border-blue-100 font-black text-sm uppercase tracking-widest shrink-0">
+              {user?.is_premium ? 'Premium' : 'Free'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Items</p>
+              <p className="text-slate-900 font-black text-xl">{totalItems}</p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Time Limit</p>
+              <p className="text-slate-900 font-black text-xl">{timeLimitLabel}</p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Passing</p>
+              <p className="text-slate-900 font-black text-xl">80%</p>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
+            <h2 className="text-slate-900 font-bold text-lg mb-3 flex items-center gap-2">
+              <Target size={20} className="text-blue-600" />
+              Attempt Rules
+            </h2>
+            <p className="text-slate-600 font-medium text-sm leading-relaxed">{attemptRule}</p>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
+            <h2 className="text-slate-900 font-bold text-lg mb-3 flex items-center gap-2">
+              <Clock size={20} className="text-blue-600" />
+              Instructions
+            </h2>
+            <ul className="text-slate-600 text-sm font-medium space-y-2">
+              <li>Answer each item carefully before submitting.</li>
+              <li>The timer begins after you click Start and questions load successfully.</li>
+              <li>Unanswered items are counted as incorrect when you submit.</li>
+            </ul>
+          </div>
+
+          {loadError && (
+            <div className="bg-red-50 text-red-700 border border-red-100 rounded-xl p-4 mb-6 text-sm font-bold">
+              {loadError}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleStartExam}
+              disabled={loading}
+              className="flex-1 py-4 rounded-xl font-black bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-widest text-sm"
+            >
+              {loading ? 'Loading Questions...' : startLabel}
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              disabled={loading}
+              className="flex-1 py-4 rounded-xl font-black bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all disabled:opacity-60 uppercase tracking-widest text-sm"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
