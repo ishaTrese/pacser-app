@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\UserMission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -50,31 +49,12 @@ class AuthController extends Controller
 
         $user  = Auth::user();
 
-        // Gamification Logic: Daily Streak & Energy Refill
+        // Daily login still refills energy, but study streaks are earned by study activity.
         $today = now()->startOfDay();
         $lastLogin = $user->last_login_date ? \Carbon\Carbon::parse($user->last_login_date)->startOfDay() : null;
 
         if (!$lastLogin || $lastLogin->lessThan($today)) {
-            // Refill energy for the new day
             $user->energy = $user->max_energy;
-
-            if ($lastLogin && $lastLogin->diffInDays($today) === 1) {
-                $user->streak += 1;
-
-                // Update maintain_streak mission
-                $mission = UserMission::where('user_id', $user->id)
-                                      ->where('date', $today->toDateString())
-                                      ->where('mission_type', 'maintain_streak')
-                                      ->first();
-                if ($mission && !$mission->is_completed) {
-                    $mission->progress = 1;
-                    $mission->is_completed = true;
-                    $mission->save();
-                }
-            } else {
-                $user->streak = 1;
-            }
-
             $user->last_login_date = $today->toDateString();
             $user->save();
         }

@@ -6,10 +6,15 @@ use App\Models\QuizSet;
 use App\Models\Question;
 use App\Models\QuizLog;
 use App\Models\UserMission;
+use App\Services\StreakService;
 use Illuminate\Http\Request;
 
 class QuizController extends Controller
 {
+    public function __construct(private StreakService $streakService)
+    {
+    }
+
     public function getQuestions(Request $request, $id)
     {
         $user = $request->user();
@@ -141,6 +146,8 @@ class QuizController extends Controller
             }
             $mission->save();
         }
+
+        $this->streakService->recordStudyActivity($user);
 
         return response()->json([
             'message' => 'Score submitted successfully',

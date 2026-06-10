@@ -32,6 +32,7 @@ class User extends Authenticatable
         'max_energy',
         'streak',
         'last_login_date',
+        'last_study_date',
         'role',
         'double_xp_until',
         'inventory_double_xp',
@@ -65,6 +66,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_date' => 'date',
+            'last_study_date' => 'date',
         ];
     }
 

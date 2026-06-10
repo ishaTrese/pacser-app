@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\MockExamResult;
+use App\Services\StreakService;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;
 
 class MockExamController extends Controller
 {
+    public function __construct(private StreakService $streakService)
+    {
+    }
+
     public function getQuestions(Request $request)
     {
         $user = $request->user();
@@ -168,6 +173,8 @@ class MockExamController extends Controller
 
         $user->mock_exam_completed = true;
         $user->save();
+
+        $this->streakService->recordStudyActivity($user);
 
         // Fetch pretest scores to return for comparison
         $pretestScores = DB::table('pretest_scores')

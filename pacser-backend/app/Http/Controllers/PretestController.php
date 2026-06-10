@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Subject;
 use App\Models\Question;
+use App\Services\StreakService;
 use Illuminate\Support\Facades\DB;
 
 class PretestController extends Controller
 {
+    public function __construct(private StreakService $streakService)
+    {
+    }
+
     public function getQuestions(Request $request)
     {
         $level = $this->normalizeLevel($request->query('level', 'professional'));
@@ -96,6 +101,8 @@ class PretestController extends Controller
         // Mark pretest as completed
         $user->pretest_completed = true;
         $user->save();
+
+        $this->streakService->recordStudyActivity($user);
 
         return response()->json([
             'message' => 'Pretest submitted successfully',
