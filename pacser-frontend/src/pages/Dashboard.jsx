@@ -344,6 +344,50 @@ export default function Dashboard() {
 
     navigate('/learn')
   }
+  const isPremiumUser = Boolean(user?.is_premium || mockExam.is_premium)
+  const hasUsedFreeMockAttempt = !isPremiumUser && mockExam.attempt_count > 0
+  const hasPremiumLockedRecommendation = !isPremiumUser && (
+    continueLearning?.is_locked || continueLearning?.recommendation_reason === 'premium_locked_next_set'
+  )
+  const premiumModuleTitle = isPremiumUser
+    ? 'Premium Active'
+    : hasUsedFreeMockAttempt
+      ? 'Unlock unlimited mock exam retakes'
+      : hasPremiumLockedRecommendation
+        ? 'Unlock your next recommended set'
+        : 'Unlock deeper practice with Premium'
+  const premiumModuleDescription = isPremiumUser
+    ? 'Unlimited mock exam retakes and premium quiz sets are available on your account.'
+    : hasUsedFreeMockAttempt
+      ? 'Your free mock exam attempt is used. Premium lets you retake full-length exams and track progress over time.'
+      : hasPremiumLockedRecommendation
+        ? `${continueLearning.quiz_set_title} is a Premium Set 3 quiz. Unlock it when you are ready for advanced practice.`
+        : 'Use Premium for unlimited mock exam retakes, Set 3 quiz access, and extra practice when you need more reps.'
+  const premiumPrimaryLabel = !userClass
+    ? 'Select Category'
+    : isPremiumUser
+      ? mockExam.attempt_count > 0
+        ? 'Retake Mock Exam'
+        : 'Continue Learning'
+      : 'Redeem Access Code'
+  const handlePremiumAction = () => {
+    if (!userClass) {
+      navigate('/select-class')
+      return
+    }
+
+    if (isPremiumUser) {
+      if (mockExam.attempt_count > 0) {
+        navigate(mockExamPath)
+        return
+      }
+
+      handleContinueLearning()
+      return
+    }
+
+    navigate('/profile')
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -634,6 +678,48 @@ export default function Dashboard() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Premium Value Module */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
+              isPremiumUser
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-700/50'
+                : 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-700/50'
+            }`}>
+              <Shield size={24} className={isPremiumUser ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'} />
+            </div>
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">
+                {isPremiumUser ? 'Premium Benefits' : 'Premium Option'}
+              </p>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{premiumModuleTitle}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1 max-w-2xl">{premiumModuleDescription}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                  Unlimited Retakes
+                </span>
+                <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                  Premium Set 3
+                </span>
+                <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                  Extra Practice
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handlePremiumAction}
+            className={`w-full lg:w-auto px-5 py-3 font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs shrink-0 ${
+              isPremiumUser
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
+            }`}
+          >
+            {premiumPrimaryLabel}
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         {/* Active Perks Indicator */}
