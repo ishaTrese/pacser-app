@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/layout/Breadcrumb';
-import { PlayCircle, Clock, CheckCircle, Lock, BookOpen, Zap } from 'lucide-react';
+import { PlayCircle, Clock, CheckCircle, Lock, BookOpen, Zap, Award } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import CategoryBadge from '../components/ui/CategoryBadge';
@@ -14,6 +14,17 @@ export default function SubjectDetail() {
 
   const [quizSets, setQuizSets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const getDifficultyBadgeClass = (difficulty) => {
+    if (difficulty === 'easy') {
+      return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-700/50';
+    }
+
+    if (difficulty === 'difficult') {
+      return 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-100 dark:border-yellow-700/50';
+    }
+
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-700/50';
+  };
 
   useEffect(() => {
     api.get(`/subjects/${subjectId}/quiz-sets`)
@@ -96,6 +107,24 @@ export default function SubjectDetail() {
                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
                       <span className="flex items-center gap-1"><BookOpen size={14} /> {set.questions} Questions</span>
                       <span className="flex items-center gap-1"><Clock size={14} /> {set.time}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {set.is_premium && (
+                        <span className="inline-flex items-center rounded-full border border-yellow-200 dark:border-yellow-700/50 bg-yellow-50 dark:bg-yellow-900/30 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-yellow-700 dark:text-yellow-300">
+                          Premium
+                        </span>
+                      )}
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${getDifficultyBadgeClass(set.difficulty)}`}>
+                        {set.difficulty_label || 'Average'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">
+                        <Award size={12} />
+                        {set.reward_label || 'Standard rewards'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">
+                        <Clock size={12} />
+                        {set.has_timer ? `Timed Challenge${set.time ? ` - ${set.time}` : ''}` : 'Untimed'}
+                      </span>
                     </div>
                   </div>
                 </div>
