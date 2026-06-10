@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
-import { Zap } from 'lucide-react';
+import { ChevronRight, Compass, Zap } from 'lucide-react';
 import CategoryBadge from '../components/ui/CategoryBadge';
 import { useAuth } from '../context/AuthContext';
 import { getSubjectsForClass } from '../config/examSubjects';
@@ -9,7 +9,62 @@ import { getSubjectsForClass } from '../config/examSubjects';
 export default function Learn() {
   const navigate = useNavigate();
   const { user, userClass } = useAuth();
-  const subjects = getSubjectsForClass(userClass);
+  const subjects = userClass ? getSubjectsForClass(userClass) : [];
+
+  if (!userClass) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
+        <Navbar />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+          <div className="mb-8 mt-2">
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+              Choose Your Reviewer Category
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
+              PACSER has separate reviewer paths for Professional and Sub-Professional exam takers.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex gap-4">
+                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-700/50">
+                  <Compass size={28} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Category Required</p>
+                  <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Select Professional or Sub-Professional first</h2>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-2 max-w-2xl">
+                    Your category controls which subjects, quiz sets, pretest questions, and mock exam layout PACSER shows.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/select-class')}
+                className="w-full md:w-auto px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs shrink-0"
+              >
+                Select Category
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4">
+                <h3 className="font-black text-slate-900 dark:text-white mb-2">Professional</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Numerical, Analytical, Verbal, and General Information reviewers.</p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4">
+                <h3 className="font-black text-slate-900 dark:text-white mb-2">Sub-Professional</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Numerical, Clerical, Verbal, and General Information reviewers.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
@@ -60,12 +115,21 @@ export default function Learn() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed flex-grow">
                   {subject.description}
                 </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl px-3 py-2 border border-slate-100 dark:border-slate-700">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Progress</p>
+                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">Ready</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl px-3 py-2 border border-slate-100 dark:border-slate-700">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Mastery</p>
+                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">--</p>
+                  </div>
+                </div>
                 
                 <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center text-blue-600 dark:text-blue-400 font-bold text-sm">
                   <span>View Quiz Sets</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             )
