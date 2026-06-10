@@ -285,6 +285,65 @@ export default function Dashboard() {
   const streakStatusDescription = isStreakSafeToday
     ? 'You completed a study activity today. Nice and tidy.'
     : 'Complete a quiz, pretest, or mock exam to count today as a study day.'
+  const subjectMasteryScores = subjects.map(subject => ({
+    ...subject,
+    mastery: stats.mastery[subject.id] || 0
+  }))
+  const averageMastery = subjectMasteryScores.length > 0
+    ? subjectMasteryScores.reduce((sum, subject) => sum + subject.mastery, 0) / subjectMasteryScores.length
+    : 0
+  const bestMockPercentage = mockExam.best_result?.percentage || 0
+  const latestMockPercentage = mockExam.latest_result?.percentage || null
+  const completionSignal = user?.pretest_completed && stats.quiz_sets_done > 0
+    ? 100
+    : user?.pretest_completed || stats.quiz_sets_done > 0
+      ? 50
+      : 0
+  const readinessScore = Math.round((averageMastery * 0.5) + (bestMockPercentage * 0.4) + (completionSignal * 0.1))
+  const readinessLabel = readinessScore >= 80
+    ? 'Exam Ready'
+    : readinessScore >= 60
+      ? 'Nearly Ready'
+      : readinessScore >= 40
+        ? 'Building Foundation'
+        : 'Getting Started'
+  const weakSubjects = subjectMasteryScores
+    .filter(subject => subject.mastery < 75)
+    .sort((a, b) => a.mastery - b.mastery)
+    .slice(0, 3)
+  const hasReadinessData = Boolean(userClass && (stats.quiz_sets_done > 0 || mockExam.attempt_count > 0 || user?.pretest_completed))
+  const readinessCtaLabel = !userClass
+    ? 'Select Category'
+    : !user?.pretest_completed
+      ? 'Take Pretest'
+      : weakSubjects.length > 0
+        ? 'Review Weak Subjects'
+        : canTakeMockExam
+          ? 'Take Mock Exam'
+          : 'Continue Learning'
+  const handleReadinessAction = () => {
+    if (!userClass) {
+      navigate('/select-class')
+      return
+    }
+
+    if (!user?.pretest_completed) {
+      navigate('/pretest')
+      return
+    }
+
+    if (weakSubjects.length > 0) {
+      navigate(`/learn/${weakSubjects[0].id}`)
+      return
+    }
+
+    if (canTakeMockExam) {
+      navigate(mockExamPath)
+      return
+    }
+
+    navigate('/learn')
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -377,6 +436,75 @@ export default function Dashboard() {
               {continueLearningPrimaryLabel}
               <ChevronRight size={16} />
             </button>
+          </div>
+        </div>
+
+        {/* Exam Readiness Panel */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-700/50">
+                <Target size={24} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Estimated Exam Readiness</p>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {hasReadinessData ? `${readinessScore}% - ${readinessLabel}` : 'Start building your readiness'}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1 max-w-2xl">
+                  {hasReadinessData
+                    ? 'This estimate combines subject mastery, mock exam performance, and study completion signals. It is not an official passing prediction.'
+                    : 'Complete your pretest, answer quiz sets, and take a mock exam to unlock a clearer readiness estimate.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleReadinessAction}
+              className="w-full lg:w-auto px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs shrink-0"
+            >
+              {readinessCtaLabel}
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 p-4">
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Subject Mastery</p>
+              <p className="text-slate-900 dark:text-white font-black text-xl">{Math.round(averageMastery)}%</p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 p-4">
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Best Mock</p>
+              <p className="text-slate-900 dark:text-white font-black text-xl">
+                {mockExam.best_result ? `${mockExam.best_result.percentage}%` : 'Not taken'}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 p-4">
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Latest Mock</p>
+              <p className="text-slate-900 dark:text-white font-black text-xl">
+                {latestMockPercentage !== null ? `${latestMockPercentage}%` : 'Not taken'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-2">Weak Subjects</p>
+            {weakSubjects.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {weakSubjects.map(subject => (
+                  <button
+                    key={subject.id}
+                    onClick={() => navigate(`/learn/${subject.id}`)}
+                    className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                  >
+                    {subject.title} - {subject.mastery}%
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                {hasReadinessData ? 'No weak subjects flagged yet.' : 'Start a subject quiz to reveal weak areas.'}
+              </p>
+            )}
           </div>
         </div>
 
