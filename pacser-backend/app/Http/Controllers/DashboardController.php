@@ -47,6 +47,7 @@ class DashboardController extends Controller
             'mastery' => $mastery,
             'continue_learning' => $level ? $this->getContinueLearning($user, $this->normalizeLevel($level)) : null,
             'streak_status' => $this->getStreakStatus($user),
+            'leaderboard_snapshot' => $this->getLeaderboardSnapshot($user),
             'mock_exam' => [
                 'attempt_count' => $mockExamAttemptCount,
                 'can_take_mock_exam' => $isPremium || $mockExamAttemptCount < 1,
@@ -58,6 +59,65 @@ class DashboardController extends Controller
             // Include user data too so the frontend can refresh user state if needed
             'user' => $user
         ]);
+    }
+
+    private function getLeaderboardSnapshot($user): array
+    {
+        $rankNames = [
+            1 => 'Applicant',
+            2 => 'Clerk',
+            3 => 'Officer',
+            4 => 'Supervisor',
+            5 => 'Director',
+            6 => 'Secretary',
+            7 => 'Commissioner',
+            8 => 'Civil Service Champion',
+        ];
+
+        $usersInRank = DB::table('users')
+            ->where('rank_id', $user->rank_id)
+            ->orderByDesc('weekly_xp')
+            ->orderBy('id')
+            ->select('id', 'first_name', 'last_name', 'weekly_xp')
+            ->get();
+
+        $totalUsers = $usersInRank->count();
+        $positionIndex = $usersInRank->search(fn ($rankedUser) => (int) $rankedUser->id === (int) $user->id);
+        $position = $positionIndex === false ? null : $positionIndex + 1;
+        $promotionCount = (int) floor($totalUsers * 0.2);
+        $demotionCount = (int) floor($totalUsers * 0.2);
+        $promotionCutoffPosition = $promotionCount > 0 ? $promotionCount : null;
+        $demotionCutoffPosition = $demotionCount > 0 ? $totalUsers - $demotionCount + 1 : null;
+
+        $promotionStatus = 'safe_zone';
+        if ($position && $promotionCount > 0 && $position <= $promotionCount && (int) $user->rank_id < 8) {
+            $promotionStatus = 'promotion_zone';
+        } elseif ($position && $demotionCount > 0 && $position >= $demotionCutoffPosition && (int) $user->rank_id > 1) {
+            $promotionStatus = 'demotion_zone';
+        }
+
+        $nextUser = $positionIndex !== false && $positionIndex > 0
+            ? $usersInRank[$positionIndex - 1]
+            : null;
+        $xpToNextUser = $nextUser
+            ? max(1, ((int) $nextUser->weekly_xp - (int) $user->weekly_xp) + 1)
+            : null;
+
+        return [
+            'rank_id' => (int) $user->rank_id,
+            'rank_name' => $rankNames[$user->rank_id] ?? 'Applicant',
+            'weekly_xp' => (int) $user->weekly_xp,
+            'position' => $position,
+            'total_users' => $totalUsers,
+            'promotion_cutoff_position' => $promotionCutoffPosition,
+            'demotion_cutoff_position' => $demotionCutoffPosition,
+            'promotion_status' => $promotionStatus,
+            'xp_to_next_user' => $xpToNextUser,
+            'next_user' => $nextUser ? [
+                'name' => trim($nextUser->first_name . ' ' . substr($nextUser->last_name, 0, 1) . '.'),
+                'weekly_xp' => (int) $nextUser->weekly_xp,
+            ] : null,
+        ];
     }
 
     private function getStreakStatus($user): array

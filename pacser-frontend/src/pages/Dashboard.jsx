@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/layout/Navbar'
 import CategoryBadge from '../components/ui/CategoryBadge'
-import { Flame, BookOpen, Target, ChevronRight, Shield, Gift, Compass } from 'lucide-react'
+import { Flame, BookOpen, Target, ChevronRight, Shield, Gift, Compass, Trophy } from 'lucide-react'
 import api from '../api/axios'
 import { getExamLevelKey, getSubjectsForClass } from '../config/examSubjects'
 
@@ -20,7 +20,8 @@ export default function Dashboard() {
       is_premium: false
     },
     continue_learning: null,
-    streak_status: null
+    streak_status: null,
+    leaderboard_snapshot: null
   })
   const [missions, setMissions] = useState([])
   const [claimingMissionId, setClaimingMissionId] = useState(null)
@@ -36,6 +37,7 @@ export default function Dashboard() {
           mastery: res.data.mastery,
           continue_learning: res.data.continue_learning || null,
           streak_status: res.data.streak_status || null,
+          leaderboard_snapshot: res.data.leaderboard_snapshot || null,
           mock_exam: res.data.mock_exam || {
             attempt_count: 0,
             can_take_mock_exam: true,
@@ -388,6 +390,27 @@ export default function Dashboard() {
 
     navigate('/profile')
   }
+  const leaderboardSnapshot = stats.leaderboard_snapshot
+  const leaderboardStatusLabel = leaderboardSnapshot?.promotion_status === 'promotion_zone'
+    ? 'Promotion Zone'
+    : leaderboardSnapshot?.promotion_status === 'demotion_zone'
+      ? 'Demotion Zone'
+      : 'Safe Zone'
+  const leaderboardStatusClass = leaderboardSnapshot?.promotion_status === 'promotion_zone'
+    ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700/50'
+    : leaderboardSnapshot?.promotion_status === 'demotion_zone'
+      ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-700/50'
+      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-700/50'
+  const leaderboardHelpText = !leaderboardSnapshot
+    ? 'Complete quizzes to start climbing your weekly league.'
+    : leaderboardSnapshot.total_users <= 1
+      ? 'Complete quizzes to set the pace in your weekly league.'
+      : leaderboardSnapshot.xp_to_next_user
+        ? `${leaderboardSnapshot.xp_to_next_user} XP to pass ${leaderboardSnapshot.next_user?.name || 'the next user'}.`
+        : 'You are leading this weekly league.'
+  const leaderboardRulesText = leaderboardSnapshot?.promotion_cutoff_position || leaderboardSnapshot?.demotion_cutoff_position
+    ? 'Top 20% promotes. Bottom 20% demotes each week.'
+    : 'Promotion and demotion apply when enough users are in your league.'
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -720,6 +743,48 @@ export default function Dashboard() {
             {premiumPrimaryLabel}
             <ChevronRight size={16} />
           </button>
+        </div>
+
+        {/* Leaderboard Snapshot */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center shrink-0 border border-yellow-100 dark:border-yellow-700/50">
+              <Trophy size={24} className="text-yellow-500 dark:text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Weekly League</p>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                {leaderboardSnapshot?.rank_name || 'Applicant'} League
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">{leaderboardHelpText}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-2">
+                {leaderboardRulesText}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-3 w-full lg:w-auto">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Position</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white">
+                {leaderboardSnapshot?.position ? `#${leaderboardSnapshot.position}` : '-'}
+                <span className="text-slate-400 dark:text-slate-500"> / {leaderboardSnapshot?.total_users || 0}</span>
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Weekly XP</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white">{leaderboardSnapshot?.weekly_xp || 0} XP</p>
+            </div>
+            <div className={`rounded-xl px-3 py-2 flex items-center justify-center text-center text-[10px] font-black uppercase tracking-widest ${leaderboardStatusClass}`}>
+              {leaderboardStatusLabel}
+            </div>
+            <button
+              onClick={() => navigate('/leaderboards')}
+              className="px-4 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+            >
+              View
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Active Perks Indicator */}
