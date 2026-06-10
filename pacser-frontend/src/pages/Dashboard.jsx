@@ -22,6 +22,7 @@ export default function Dashboard() {
     continue_learning: null
   })
   const [missions, setMissions] = useState([])
+  const [claimingMissionId, setClaimingMissionId] = useState(null)
   const subjects = getSubjectsForClass(userClass)
 
   const [timeLeft, setTimeLeft] = useState('');
@@ -103,6 +104,30 @@ export default function Dashboard() {
       ? '165 items to be completed in 2 hours and 40 minutes.'
       : 'Choose Professional or Sub-Professional to start a full-length mock exam.'
   const completedUnclaimedMissions = missions.filter(mission => mission.is_completed && !mission.is_claimed)
+  const getMissionTitle = (missionType) => {
+    if (missionType === 'complete_2_quiz_sets') return 'Complete 2 Quiz Sets'
+    if (missionType === 'score_80_percent') return 'Score 80% or Higher'
+    if (missionType === 'earn_100_xp') return 'Earn 100 XP'
+    if (missionType === 'maintain_streak') return 'Maintain Your Daily Streak'
+    return 'Daily Mission'
+  }
+  const handleClaimMission = async (missionId) => {
+    if (claimingMissionId) return
+
+    setClaimingMissionId(missionId)
+
+    try {
+      const res = await api.post(`/missions/${missionId}/claim`)
+      setMissions(missions.map(mission => mission.id === missionId ? res.data.mission : mission))
+      if (res.data.user) {
+        updateUserStats(res.data.user)
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to claim reward')
+    } finally {
+      setClaimingMissionId(null)
+    }
+  }
   const mockExamPath = userClass ? `/mock-exam?level=${userClass.toLowerCase()}` : '/select-class'
   const getDailyAction = () => {
     if (!userClass) {
@@ -303,6 +328,80 @@ export default function Dashboard() {
               <ChevronRight size={16} />
             </button>
           </div>
+        </div>
+
+        {/* Daily Missions Widget */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Daily Missions</p>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Earn points from today&apos;s goals</h2>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-700/50 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-widest">
+              {completedUnclaimedMissions.length} Ready
+            </div>
+          </div>
+
+          {missions.length === 0 ? (
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No missions available today.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {missions.map((mission) => {
+                const progressPercent = mission.target > 0 ? Math.min(100, (mission.progress / mission.target) * 100) : 0
+                const isClaimable = mission.is_completed && !mission.is_claimed
+                const isClaimed = mission.is_claimed
+
+                return (
+                  <div
+                    key={mission.id}
+                    className={`rounded-xl border p-4 transition-colors ${
+                      isClaimable
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700/60'
+                        : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white">{getMissionTitle(mission.mission_type)}</h3>
+                        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1">
+                          {mission.progress} / {mission.target}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 sm:justify-end">
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">+{mission.points_reward} pts</span>
+                        {isClaimable ? (
+                          <button
+                            onClick={() => handleClaimMission(mission.id)}
+                            disabled={claimingMissionId === mission.id}
+                            className="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors"
+                          >
+                            {claimingMissionId === mission.id ? 'Claiming' : 'Claim'}
+                          </button>
+                        ) : isClaimed ? (
+                          <button
+                            disabled
+                            className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-not-allowed"
+                          >
+                            Claimed
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">In Progress</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={mission.is_completed ? 'h-full bg-emerald-500' : 'h-full bg-blue-500'}
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Active Perks Indicator */}
