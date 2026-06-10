@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, User } from 'lucide-react'
+import { Bell, Menu, User, X } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
@@ -17,6 +17,7 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -35,6 +36,10 @@ export default function Navbar() {
       fetchNotifications();
     }
   }, [user]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
 
   const fetchNotifications = async () => {
     try {
@@ -58,35 +63,40 @@ export default function Navbar() {
     return '/login'
   }
 
-  return (
-    <nav className="w-full flex items-center px-6 h-16 gap-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-50 transition-colors">
-      {/* Logo */}
-      <Link to="/" className="flex-shrink-0 mr-2 flex items-center">
-        <span className="font-extrabold text-slate-900 dark:text-white tracking-tight text-xl">
-          Pa<span className="text-blue-600 dark:text-blue-400">CSE</span>r
-        </span>
+  const renderNavLink = (link, onNavigate) => {
+    const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path))
+
+    return (
+      <Link
+        key={link.path}
+        to={getLinkTarget(link.path)}
+        onClick={onNavigate}
+        className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${
+          isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
+        }`}
+      >
+        {link.label}
       </Link>
+    )
+  }
 
-      {/* Nav Links */}
-      <div className="flex items-center gap-1">
-        {navLinks.map((link) => {
-          const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
-          return (
-            <Link
-              key={link.path}
-              to={getLinkTarget(link.path)}
-              className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${
-                isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
-            >
-              {link.label}
-            </Link>
-          )
-        })}
-      </div>
+  return (
+    <nav className="relative w-full max-w-[100vw] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-50 transition-colors">
+      <div className="flex items-center px-3 sm:px-6 h-16 gap-2 sm:gap-4 min-w-0">
+        {/* Logo */}
+        <Link to="/" className="flex-shrink-0 flex items-center min-w-0">
+          <span className="font-extrabold text-slate-900 dark:text-white tracking-tight text-lg sm:text-xl">
+            Pa<span className="text-blue-600 dark:text-blue-400">CSE</span>r
+          </span>
+        </Link>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4 ml-auto">
+        {/* Desktop nav links */}
+        <div className="hidden lg:flex items-center gap-1 min-w-0">
+          {navLinks.map((link) => renderNavLink(link))}
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center gap-2 sm:gap-4 ml-auto shrink-0">
         {user ? (
           <>
             {/* Bell */}
@@ -104,7 +114,7 @@ export default function Navbar() {
             {!user.is_premium && (
               <button
                 onClick={() => navigate('/profile')}
-                className="px-4 py-1.5 rounded-full text-sm font-bold bg-yellow-500 text-yellow-900 hover:bg-yellow-400 transition-colors shadow-sm"
+                className="hidden sm:inline-flex px-3 sm:px-4 py-1.5 rounded-full text-sm font-bold bg-yellow-500 text-yellow-900 hover:bg-yellow-400 transition-colors shadow-sm"
               >
                 Go Premium
               </button>
@@ -176,7 +186,39 @@ export default function Navbar() {
             </Link>
           </>
         )}
+
+          {/* Mobile menu toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="lg:hidden p-2 rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile nav panel */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 shadow-sm">
+          <div className="flex flex-col gap-1">
+            {navLinks.map((link) => renderNavLink(link, () => setMobileMenuOpen(false)))}
+            {!user?.is_premium && user && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  navigate('/profile')
+                }}
+                className="sm:hidden w-full text-left px-4 py-2 rounded-md text-sm font-bold bg-yellow-500 text-yellow-900 hover:bg-yellow-400 transition-colors"
+              >
+                Go Premium
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
