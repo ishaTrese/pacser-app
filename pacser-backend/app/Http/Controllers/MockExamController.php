@@ -73,6 +73,75 @@ class MockExamController extends Controller
         return config("exam_subjects.aliases.$key", 'professional');
     }
 
+    public function history(Request $request)
+    {
+        $subjectNames = Subject::pluck('name', 'slug');
+
+        $attempts = MockExamResult::where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get()
+            ->map(function (MockExamResult $result) use ($subjectNames) {
+                $percentage = $this->percentage($result->total_score, $result->total_items);
+
+                return [
+                    'id' => $result->id,
+                    'score' => (int) $result->total_score,
+                    'total_items' => (int) $result->total_items,
+                    'percentage' => $percentage,
+                    'passed' => $percentage >= 80,
+                    'taken_at' => $result->created_at,
+                    'subject_scores' => $this->sanitizeSubjectScores($result->subject_scores, $subjectNames),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'attempts' => $attempts,
+        ]);
+    }
+
+    private function sanitizeSubjectScores($subjectScores, $subjectNames): array
+    {
+        if (!is_array($subjectScores)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        foreach ($subjectScores as $slug => $scoreData) {
+            if (!is_array($scoreData)) {
+                continue;
+            }
+
+            $score = (int) ($scoreData['score'] ?? 0);
+            $total = (int) ($scoreData['total'] ?? 0);
+
+            $sanitized[] = [
+                'subject_slug' => $slug,
+                'subject_name' => $subjectNames[$slug] ?? ucwords(str_replace('-', ' ', $slug)),
+                'subject_id' => $scoreData['subject_id'] ?? null,
+                'score' => $score,
+                'total' => $total,
+                'percentage' => $this->percentage($score, $total),
+            ];
+        }
+
+        return $sanitized;
+    }
+
+    private function percentage($score, $total): float
+    {
+        $total = (int) $total;
+
+        if ($total <= 0) {
+            return 0;
+        }
+
+        return round(((int) $score / $total) * 100, 1);
+    }
+
     public function submit(Request $request)
     {
         $validated = $request->validate([

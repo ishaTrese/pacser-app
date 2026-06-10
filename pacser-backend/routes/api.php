@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Mock Exam
     Route::get('/mock-exam/questions', [\App\Http\Controllers\MockExamController::class, 'getQuestions']);
+    Route::get('/mock-exam/history', [\App\Http\Controllers\MockExamController::class, 'history']);
     Route::post('/mock-exam/submit', [\App\Http\Controllers\MockExamController::class, 'submit']);
 
     // Dashboard Stats

@@ -10,6 +10,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [stats, setStats] = useState(null);
   const [mockExam, setMockExam] = useState(null);
+  const [mockExamHistory, setMockExamHistory] = useState([]);
+  const [expandedAttemptId, setExpandedAttemptId] = useState(null);
   const [badges, setBadges] = useState([]);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,9 @@ export default function Profile() {
       // Fetch Missions
       const missionRes = await api.get('/missions');
       setMissions(missionRes.data.missions);
+
+      const historyRes = await api.get('/mock-exam/history');
+      setMockExamHistory(historyRes.data.attempts || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,6 +105,18 @@ export default function Profile() {
     if (!result) return 'No attempts yet';
     return `${result.percentage}% (${result.score}/${result.total_items})`;
   };
+
+  const formatAttemptDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const visibleMockExamHistory = mockExamHistory.slice(0, 3);
 
 
 
@@ -217,6 +234,84 @@ export default function Profile() {
                       </div>
                     </div>
                   )}
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Clock size={20} className="text-blue-500" />
+                      Mock Exam History
+                    </h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mb-4">
+                      Showing latest 3 attempts.
+                    </p>
+
+                    {mockExamHistory.length === 0 ? (
+                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          No mock exam attempts yet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        {visibleMockExamHistory.map((attempt, index) => (
+                          <div key={attempt.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div>
+                                <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest">
+                                  Attempt #{mockExamHistory.length - index}
+                                </p>
+                                <p className="text-slate-900 dark:text-white font-black text-lg">
+                                  {formatAttemptDate(attempt.taken_at)}
+                                </p>
+                              </div>
+                              <div className="sm:text-right">
+                                <p className="text-slate-900 dark:text-white font-black text-lg">
+                                  {attempt.score} / {attempt.total_items}
+                                  <span className="text-slate-400 dark:text-slate-500 text-sm font-bold ml-2">
+                                    {attempt.percentage}%
+                                  </span>
+                                </p>
+                                <p className={`text-xs font-bold uppercase tracking-widest ${attempt.passed ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                  {attempt.passed ? 'Passed' : 'Needs Review'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {attempt.subject_scores?.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedAttemptId(expandedAttemptId === attempt.id ? null : attempt.id)}
+                                className="mt-3 text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                              >
+                                {expandedAttemptId === attempt.id ? 'Hide breakdown' : 'View breakdown'}
+                              </button>
+                            )}
+
+                            {expandedAttemptId === attempt.id && attempt.subject_scores?.length > 0 && (
+                              <div className="space-y-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                {attempt.subject_scores.map((subject) => (
+                                  <div key={`${attempt.id}-${subject.subject_slug}`} className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 items-center">
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                      {subject.subject_name}
+                                    </p>
+                                    <p className="text-xs font-black text-slate-500 dark:text-slate-400">
+                                      {subject.score}/{subject.total}
+                                      <span className="ml-2 text-slate-400 dark:text-slate-500">{subject.percentage}%</span>
+                                    </p>
+                                    <div className="col-span-2 h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                      <div
+                                        className={subject.percentage >= 80 ? 'h-full bg-emerald-500' : 'h-full bg-blue-500'}
+                                        style={{ width: `${Math.min(100, subject.percentage)}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Rank Perks Section */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
