@@ -5,7 +5,7 @@ import Navbar from '../components/layout/Navbar'
 import CategoryBadge from '../components/ui/CategoryBadge'
 import { Flame, BookOpen, Target, ChevronRight, Shield, Gift, Compass } from 'lucide-react'
 import api from '../api/axios'
-import { getSubjectsForClass } from '../config/examSubjects'
+import { getExamLevelKey, getSubjectsForClass } from '../config/examSubjects'
 
 export default function Dashboard() {
   const { user, updateUserStats, userClass } = useAuth()
@@ -18,7 +18,8 @@ export default function Dashboard() {
       can_take_mock_exam: true,
       attempts_remaining: 1,
       is_premium: false
-    }
+    },
+    continue_learning: null
   })
   const [missions, setMissions] = useState([])
   const subjects = getSubjectsForClass(userClass)
@@ -26,11 +27,12 @@ export default function Dashboard() {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    api.get('/dashboard/stats')
+    api.get('/dashboard/stats', userClass ? { params: { level: getExamLevelKey(userClass) } } : undefined)
       .then(res => {
         setStats({
           quiz_sets_done: res.data.quiz_sets_done,
           mastery: res.data.mastery,
+          continue_learning: res.data.continue_learning || null,
           mock_exam: res.data.mock_exam || {
             attempt_count: 0,
             can_take_mock_exam: true,
@@ -47,7 +49,7 @@ export default function Dashboard() {
     api.get('/missions')
       .then(res => setMissions(res.data.missions || []))
       .catch(err => console.error("Failed to load dashboard missions", err))
-  }, [])
+  }, [userClass])
 
   useEffect(() => {
     if (!user?.double_xp_until) {
@@ -170,6 +172,44 @@ export default function Dashboard() {
   }
   const dailyAction = getDailyAction()
   const DailyActionIcon = dailyAction.icon
+  const continueLearning = stats.continue_learning
+  const continueLearningTitle = continueLearning?.quiz_set_title || 'Choose a reviewer subject'
+  const continueLearningSubject = continueLearning?.subject_name || userClass || 'Reviewer'
+  const continueLearningDescription = continueLearning?.message || (
+    userClass
+      ? 'Start with one reviewer subject and build your first mastery score.'
+      : 'Select your exam category so PACSER can recommend your next quiz set.'
+  )
+  const continueLearningPrimaryLabel = continueLearning?.is_locked
+    ? 'View Subject'
+    : continueLearning?.quiz_set_id
+      ? 'Continue Quiz'
+      : userClass
+        ? 'Open Learn'
+        : 'Select Category'
+  const handleContinueLearning = () => {
+    if (!userClass) {
+      navigate('/select-class')
+      return
+    }
+
+    if (continueLearning?.is_locked && continueLearning.subject_slug) {
+      navigate(`/learn/${continueLearning.subject_slug}`)
+      return
+    }
+
+    if (continueLearning?.quiz_set_id) {
+      navigate(`/quiz/${continueLearning.quiz_set_id}`, {
+        state: {
+          title: continueLearning.quiz_set_title,
+          subjectId: continueLearning.subject_slug
+        }
+      })
+      return
+    }
+
+    navigate('/learn')
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -221,6 +261,45 @@ export default function Dashboard() {
               className="px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
             >
               {dailyAction.primaryLabel}
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Continue Learning Card */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-700/50">
+              <BookOpen size={22} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Continue Learning</p>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{continueLearningTitle}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+                <span className="font-bold text-slate-700 dark:text-slate-200">{continueLearningSubject}</span>
+                {' - '}{continueLearningDescription}
+              </p>
+              {continueLearning?.recommendation_reason && (
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-2">
+                  {continueLearning.recommendation_reason.replace(/_/g, ' ')}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
+            {continueLearning?.is_locked && (
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 font-black rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-widest text-xs"
+              >
+                Upgrade
+              </button>
+            )}
+            <button
+              onClick={handleContinueLearning}
+              className="px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+            >
+              {continueLearningPrimaryLabel}
               <ChevronRight size={16} />
             </button>
           </div>

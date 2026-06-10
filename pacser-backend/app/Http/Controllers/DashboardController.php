@@ -39,10 +39,12 @@ class DashboardController extends Controller
             ->count();
         $mockExamAnalytics = $this->getMockExamAnalytics($userId);
         $isPremium = (bool) $user->is_premium;
+        $level = $request->query('level');
 
         return response()->json([
             'quiz_sets_done' => $quizSetsDone,
             'mastery' => $mastery,
+            'continue_learning' => $level ? $this->getContinueLearning($user, $this->normalizeLevel($level)) : null,
             'mock_exam' => [
                 'attempt_count' => $mockExamAttemptCount,
                 'can_take_mock_exam' => $isPremium || $mockExamAttemptCount < 1,
@@ -54,6 +56,138 @@ class DashboardController extends Controller
             // Include user data too so the frontend can refresh user state if needed
             'user' => $user
         ]);
+    }
+
+    private function normalizeLevel(?string $level): string
+    {
+        $key = strtolower(trim($level ?? 'professional'));
+
+        return config("exam_subjects.aliases.$key", 'professional');
+    }
+
+    private function getContinueLearning($user, string $level): array
+    {
+        $subjectSlugs = config("exam_subjects.levels.$level.subjects", []);
+        $slugOrder = array_flip($subjectSlugs);
+        $completedQuizSetIds = DB::table('quiz_logs')
+            ->where('user_id', $user->id)
+            ->distinct()
+            ->pluck('quiz_set_id')
+            ->all();
+
+        $subjects = DB::table('subjects')
+            ->whereIn('slug', $subjectSlugs)
+            ->get()
+            ->sortBy(fn ($subject) => $slugOrder[$subject->slug] ?? 999)
+            ->values();
+
+        if ($subjects->isEmpty()) {
+            return [
+                'recommendation_reason' => 'all_subjects_completed',
+                'subject_id' => null,
+                'subject_name' => null,
+                'subject_slug' => null,
+                'quiz_set_id' => null,
+                'quiz_set_title' => null,
+                'is_locked' => false,
+                'is_premium' => false,
+                'message' => 'No reviewer subjects are available yet.',
+            ];
+        }
+
+        $latestSet = DB::table('quiz_logs')
+            ->join('quiz_sets', 'quiz_logs.quiz_set_id', '=', 'quiz_sets.id')
+            ->join('subjects', 'quiz_sets.subject_id', '=', 'subjects.id')
+            ->where('quiz_logs.user_id', $user->id)
+            ->whereIn('subjects.slug', $subjectSlugs)
+            ->orderByDesc('quiz_logs.created_at')
+            ->orderByDesc('quiz_logs.id')
+            ->select(
+                'quiz_sets.id',
+                'quiz_sets.name',
+                'quiz_sets.order_index',
+                'subjects.id as subject_id',
+                'subjects.name as subject_name',
+                'subjects.slug as subject_slug'
+            )
+            ->first();
+
+        if (!$latestSet) {
+            $firstSubject = $subjects->first();
+            $firstSet = $this->firstIncompleteQuizSet($firstSubject->id, $completedQuizSetIds);
+
+            return $this->formatContinueLearning($firstSubject, $firstSet, 'first_subject_start', $user);
+        }
+
+        $sameSubjectNextSet = $this->firstIncompleteQuizSet($latestSet->subject_id, $completedQuizSetIds);
+        if ($sameSubjectNextSet) {
+            return $this->formatContinueLearning($latestSet, $sameSubjectNextSet, 'next_set_same_subject', $user);
+        }
+
+        foreach ($subjects as $subject) {
+            $nextSet = $this->firstIncompleteQuizSet($subject->id, $completedQuizSetIds);
+            if ($nextSet) {
+                return $this->formatContinueLearning($subject, $nextSet, 'next_incomplete_subject', $user);
+            }
+        }
+
+        return [
+            'recommendation_reason' => 'all_subjects_completed',
+            'subject_id' => null,
+            'subject_name' => null,
+            'subject_slug' => null,
+            'quiz_set_id' => null,
+            'quiz_set_title' => null,
+            'is_locked' => false,
+            'is_premium' => false,
+            'message' => 'You have completed the available reviewer sets for this level.',
+        ];
+    }
+
+    private function firstIncompleteQuizSet(int $subjectId, array $completedQuizSetIds)
+    {
+        return DB::table('quiz_sets')
+            ->where('subject_id', $subjectId)
+            ->when(!empty($completedQuizSetIds), function ($query) use ($completedQuizSetIds) {
+                $query->whereNotIn('id', $completedQuizSetIds);
+            })
+            ->orderBy('order_index')
+            ->orderBy('id')
+            ->first();
+    }
+
+    private function formatContinueLearning($subject, $quizSet, string $reason, $user): array
+    {
+        if (!$quizSet) {
+            return [
+                'recommendation_reason' => 'all_subjects_completed',
+                'subject_id' => $subject->subject_id ?? $subject->id ?? null,
+                'subject_name' => $subject->subject_name ?? $subject->name ?? null,
+                'subject_slug' => $subject->subject_slug ?? $subject->slug ?? null,
+                'quiz_set_id' => null,
+                'quiz_set_title' => null,
+                'is_locked' => false,
+                'is_premium' => false,
+                'message' => 'No quiz set is available for this subject yet.',
+            ];
+        }
+
+        $isPremiumSet = (int) $quizSet->order_index === 3;
+        $isLocked = $isPremiumSet && !$user->is_premium;
+
+        return [
+            'recommendation_reason' => $isLocked ? 'premium_locked_next_set' : $reason,
+            'subject_id' => $subject->subject_id ?? $subject->id,
+            'subject_name' => $subject->subject_name ?? $subject->name,
+            'subject_slug' => $subject->subject_slug ?? $subject->slug,
+            'quiz_set_id' => $quizSet->id,
+            'quiz_set_title' => $quizSet->name,
+            'is_locked' => $isLocked,
+            'is_premium' => $isPremiumSet,
+            'message' => $isLocked
+                ? 'This next quiz set is available with Premium.'
+                : 'Continue with the next recommended quiz set.',
+        ];
     }
 
     private function getMockExamAnalytics(int $userId): array
