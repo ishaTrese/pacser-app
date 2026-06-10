@@ -71,6 +71,9 @@ export default function SubjectQuiz() {
           awarded_xp: res.data.awarded_xp,
           base_points: res.data.base_points,
           awarded_points: res.data.awarded_points,
+          perfect_score_bonus_awarded: res.data.perfect_score_bonus_awarded,
+          perfect_score_bonus_xp: res.data.perfect_score_bonus_xp,
+          perfect_score_bonus_points: res.data.perfect_score_bonus_points,
           subjectId: resolvedSubjectId
         }
       });

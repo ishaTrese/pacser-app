@@ -217,9 +217,15 @@ class QuizController extends Controller
                 $xpGained *= 2;
             }
 
-            $lockedUser->xp += $xpGained;
-            $lockedUser->weekly_xp += $xpGained;
-            $lockedUser->points += $pointsGained;
+            $perfectScoreBonusAwarded = (int) $validated['score'] === (int) $validated['total'] && (int) $validated['total'] > 0;
+            $perfectScoreBonusXp = $perfectScoreBonusAwarded ? 25 : 0;
+            $perfectScoreBonusPoints = $perfectScoreBonusAwarded ? 50 : 0;
+            $totalXpGained = $xpGained + $perfectScoreBonusXp;
+            $totalPointsGained = $pointsGained + $perfectScoreBonusPoints;
+
+            $lockedUser->xp += $totalXpGained;
+            $lockedUser->weekly_xp += $totalXpGained;
+            $lockedUser->points += $totalPointsGained;
             $lockedUser->save();
 
             // Update Daily Missions
@@ -235,7 +241,7 @@ class QuizController extends Controller
                 } elseif ($mission->mission_type === 'score_80_percent' && $percentage >= 80) {
                     $mission->progress += 1;
                 } elseif ($mission->mission_type === 'earn_100_xp') {
-                    $mission->progress += $xpGained;
+                    $mission->progress += $totalXpGained;
                 }
 
                 if ($mission->progress >= $mission->target) {
@@ -255,14 +261,17 @@ class QuizController extends Controller
 
             return [
                 'percentage' => $percentage,
-                'xp_gained' => $xpGained,
-                'points_gained' => $pointsGained,
+                'xp_gained' => $totalXpGained,
+                'points_gained' => $totalPointsGained,
                 'difficulty' => $difficulty,
                 'difficulty_multiplier' => $difficultyMultiplier,
                 'base_xp' => $baseXp,
                 'awarded_xp' => $xpGained,
                 'base_points' => $basePoints,
                 'awarded_points' => $pointsGained,
+                'perfect_score_bonus_awarded' => $perfectScoreBonusAwarded,
+                'perfect_score_bonus_xp' => $perfectScoreBonusXp,
+                'perfect_score_bonus_points' => $perfectScoreBonusPoints,
                 'log' => $log,
             ];
         });

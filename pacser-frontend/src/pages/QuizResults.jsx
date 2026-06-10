@@ -13,6 +13,9 @@ export default function QuizResults() {
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
   const difficulty = location.state?.difficulty || 'average';
   const difficultyMultiplier = Number(location.state?.difficulty_multiplier || 1);
+  const perfectBonusAwarded = Boolean(location.state?.perfect_score_bonus_awarded);
+  const perfectBonusXp = Number(location.state?.perfect_score_bonus_xp || 0);
+  const perfectBonusPoints = Number(location.state?.perfect_score_bonus_points || 0);
   const difficultyLabel = difficulty.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const difficultyBonusLabel = difficultyMultiplier > 1
     ? `Challenge Reward +${Math.round((difficultyMultiplier - 1) * 100)}%`
@@ -88,6 +91,17 @@ export default function QuizResults() {
               </div>
             </div>
           </div>
+
+          {perfectBonusAwarded && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded-xl p-4 mb-8 text-left">
+              <p className="text-xs font-black text-emerald-600 dark:text-emerald-300 uppercase tracking-widest mb-1">
+                Perfect Score Bonus
+              </p>
+              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-100">
+                Flawless quiz! +{perfectBonusXp} XP and +{perfectBonusPoints} Points.
+              </p>
+            </div>
+          )}
 
           <p className="text-lg text-slate-700 dark:text-slate-300 font-medium mb-10 max-w-sm mx-auto leading-relaxed">
             {percentage >= 75 ? "Excellent work! You have a strong grasp of this material." 
