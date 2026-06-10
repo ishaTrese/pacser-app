@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/layout/Navbar'
 import CategoryBadge from '../components/ui/CategoryBadge'
-import { Flame, BookOpen, Target, ChevronRight, Shield } from 'lucide-react'
+import { Flame, BookOpen, Target, ChevronRight, Shield, Gift, Compass } from 'lucide-react'
 import api from '../api/axios'
 import { getSubjectsForClass } from '../config/examSubjects'
 
@@ -20,6 +20,7 @@ export default function Dashboard() {
       is_premium: false
     }
   })
+  const [missions, setMissions] = useState([])
   const subjects = getSubjectsForClass(userClass)
 
   const [timeLeft, setTimeLeft] = useState('');
@@ -42,6 +43,10 @@ export default function Dashboard() {
         }
       })
       .catch(err => console.error("Failed to load dashboard stats", err))
+
+    api.get('/missions')
+      .then(res => setMissions(res.data.missions || []))
+      .catch(err => console.error("Failed to load dashboard missions", err))
   }, [])
 
   useEffect(() => {
@@ -95,6 +100,76 @@ export default function Dashboard() {
     : userClass === 'Sub-Professional'
       ? '165 items to be completed in 2 hours and 40 minutes.'
       : 'Choose Professional or Sub-Professional to start a full-length mock exam.'
+  const completedUnclaimedMissions = missions.filter(mission => mission.is_completed && !mission.is_claimed)
+  const mockExamPath = userClass ? `/mock-exam?level=${userClass.toLowerCase()}` : '/select-class'
+  const getDailyAction = () => {
+    if (!userClass) {
+      return {
+        icon: Compass,
+        label: 'Start Here',
+        title: 'Choose your exam category',
+        description: 'Select Professional or Sub-Professional so PACSER can show the right subjects, pretest, and mock exam.',
+        primaryLabel: 'Select Category',
+        primaryAction: () => navigate('/select-class'),
+        secondaryLabel: null,
+        secondaryAction: null
+      }
+    }
+
+    if (!user?.pretest_completed) {
+      return {
+        icon: Target,
+        label: 'Diagnostic First',
+        title: 'Take your pretest',
+        description: `Set your ${userClass} baseline before studying so your progress has a starting point.`,
+        primaryLabel: 'Take Pretest',
+        primaryAction: () => navigate('/pretest'),
+        secondaryLabel: 'Review Subjects',
+        secondaryAction: () => navigate('/learn')
+      }
+    }
+
+    if (completedUnclaimedMissions.length > 0) {
+      return {
+        icon: Gift,
+        label: 'Reward Ready',
+        title: `Claim ${completedUnclaimedMissions.length} completed mission reward${completedUnclaimedMissions.length > 1 ? 's' : ''}`,
+        description: 'You already earned the reward. Claim it before starting the next study session.',
+        primaryLabel: 'Claim Rewards',
+        primaryAction: () => navigate('/profile'),
+        secondaryLabel: 'Continue Learning',
+        secondaryAction: () => navigate('/learn')
+      }
+    }
+
+    if (subjects.length > 0) {
+      return {
+        icon: BookOpen,
+        label: 'Next Study Step',
+        title: stats.quiz_sets_done > 0 ? 'Continue your reviewer progress' : 'Start your first reviewer set',
+        description: stats.quiz_sets_done > 0
+          ? 'Keep momentum by returning to your subject reviewer and finishing another quiz set.'
+          : `Begin with one ${userClass} subject and build your first mastery score.`,
+        primaryLabel: 'Continue Learning',
+        primaryAction: () => navigate('/learn'),
+        secondaryLabel: canTakeMockExam ? 'Mock Exam' : 'Mock Status',
+        secondaryAction: () => navigate(canTakeMockExam ? mockExamPath : '/profile')
+      }
+    }
+
+    return {
+      icon: Target,
+      label: 'Readiness Check',
+      title: 'Take a full-length mock exam',
+      description: 'Use the mock exam to measure your readiness under timed conditions.',
+      primaryLabel: canTakeMockExam ? 'Take Mock Exam' : 'View Mock Status',
+      primaryAction: () => navigate(canTakeMockExam ? mockExamPath : '/profile'),
+      secondaryLabel: 'Review Subjects',
+      secondaryAction: () => navigate('/learn')
+    }
+  }
+  const dailyAction = getDailyAction()
+  const DailyActionIcon = dailyAction.icon
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -118,6 +193,37 @@ export default function Dashboard() {
             Continue Learning
             <ChevronRight size={18} />
           </button>
+        </div>
+
+        {/* Daily Action Panel */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex gap-4">
+            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-700/50">
+              <DailyActionIcon size={24} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">{dailyAction.label}</p>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{dailyAction.title}</h2>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1 max-w-2xl">{dailyAction.description}</p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+            {dailyAction.secondaryLabel && (
+              <button
+                onClick={dailyAction.secondaryAction}
+                className="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 font-black rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors uppercase tracking-widest text-xs"
+              >
+                {dailyAction.secondaryLabel}
+              </button>
+            )}
+            <button
+              onClick={dailyAction.primaryAction}
+              className="px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+            >
+              {dailyAction.primaryLabel}
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Active Perks Indicator */}
