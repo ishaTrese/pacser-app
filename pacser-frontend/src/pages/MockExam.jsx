@@ -38,9 +38,44 @@ export default function MockExam() {
 
   const justCompleted = useRef(false);
   const timerRef = useRef(null);
+  const protectionActiveRef = useRef(false);
+  const allowNavigationRef = useRef(false);
 
   useEffect(() => {
     return () => clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    protectionActiveRef.current = started && !finished && !submitting;
+
+    if (protectionActiveRef.current) {
+      allowNavigationRef.current = false;
+    }
+  }, [started, finished, submitting]);
+
+  useEffect(() => {
+    if (!started || finished || submitting) return;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [started, finished, submitting]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!protectionActiveRef.current || allowNavigationRef.current) return;
+
+      window.history.pushState({ mockExamProtection: true }, '', window.location.href);
+      setShowQuitConfirm(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
@@ -72,6 +107,7 @@ export default function MockExam() {
       setCurrentIndex(0);
       setAnswers({});
       setTimeLeft(initialTime);
+      window.history.pushState({ mockExamProtection: true }, '', window.location.href);
       setStarted(true);
       startTimer();
     } catch (err) {
@@ -120,7 +156,11 @@ export default function MockExam() {
   };
 
   const handleQuit = () => {
+    allowNavigationRef.current = true;
+    protectionActiveRef.current = false;
     clearInterval(timerRef.current);
+    setShowQuitConfirm(false);
+    setStarted(false);
     navigate('/dashboard');
   };
 
@@ -180,6 +220,8 @@ export default function MockExam() {
         pretestScores: res.data.pretest_scores
       });
       justCompleted.current = true;
+      allowNavigationRef.current = true;
+      protectionActiveRef.current = false;
       setFinished(true);
     } catch (err) {
       console.error(err);
