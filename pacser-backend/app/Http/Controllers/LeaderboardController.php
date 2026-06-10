@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\RankHistory;
 use Carbon\Carbon;
 
 class LeaderboardController extends Controller
@@ -102,6 +103,14 @@ class LeaderboardController extends Controller
             })
             ->count() + 1;
         $allTimeCurrentUser = $this->formatAllTimeCurrentUser($user, $rankNames, $allTimePosition);
+        $recentRankHistory = RankHistory::where('user_id', $user->id)
+            ->orderByDesc('week_start_date')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->take(5)
+            ->get()
+            ->map(fn ($history) => $this->formatRankHistory($history, $rankNames))
+            ->values();
 
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd = Carbon::now()->endOfWeek();
@@ -113,6 +122,10 @@ class LeaderboardController extends Controller
             'leaderboard' => $weeklyRows,
             'all_time_leaderboard' => $allTimeUsers,
             'all_time_current_user' => $allTimeCurrentUser,
+            'rank_history' => [
+                'latest' => $recentRankHistory->first(),
+                'recent' => $recentRankHistory,
+            ],
             'current_user_rank' => (int) $user->rank_id,
             'weekly_league' => [
                 'rank_id' => (int) $user->rank_id,
@@ -177,6 +190,23 @@ class LeaderboardController extends Controller
             'rank_id' => $rankId,
             'rank_name' => $rankNames[$rankId] ?? 'Applicant',
             'streak' => (int) $user->streak,
+        ];
+    }
+
+    private function formatRankHistory(RankHistory $history, array $rankNames): array
+    {
+        $oldRankId = (int) $history->old_rank_id;
+        $newRankId = (int) $history->new_rank_id;
+
+        return [
+            'old_rank_id' => $oldRankId,
+            'old_rank_name' => $rankNames[$oldRankId] ?? 'Applicant',
+            'new_rank_id' => $newRankId,
+            'new_rank_name' => $rankNames[$newRankId] ?? 'Applicant',
+            'weekly_xp' => (int) $history->weekly_xp,
+            'status' => $history->status,
+            'week_start_date' => $history->week_start_date,
+            'created_at' => $history->created_at,
         ];
     }
 

@@ -12,6 +12,7 @@ export default function Leaderboard() {
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [weeklyLeague, setWeeklyLeague] = useState(null);
   const [allTimeCurrentUser, setAllTimeCurrentUser] = useState(null);
+  const [rankHistory, setRankHistory] = useState({ latest: null, recent: [] });
   const [loading, setLoading] = useState(true);
 
   const [userRankName, setUserRankName] = useState('Applicant');
@@ -23,6 +24,7 @@ export default function Leaderboard() {
         setAllTimeLeaderboard(res.data.all_time_leaderboard);
         setWeeklyLeague(res.data.weekly_league || null);
         setAllTimeCurrentUser(res.data.all_time_current_user || null);
+        setRankHistory(res.data.rank_history || { latest: null, recent: [] });
 
         const rankNames = {
           1: 'Applicant',
@@ -89,6 +91,18 @@ export default function Leaderboard() {
     return '';
   };
 
+  const movementLabel = (status) => {
+    if (status === 'promoted') return 'Promoted';
+    if (status === 'demoted') return 'Demoted';
+    return 'Retained';
+  };
+
+  const movementClass = (status) => {
+    if (status === 'promoted') return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-700/50';
+    if (status === 'demoted') return 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-100 dark:border-red-700/50';
+    return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-700/50';
+  };
+
   const nextUserMessage = weeklyLeague?.xp_to_next_user
     ? `${weeklyLeague.xp_to_next_user} XP to pass ${weeklyLeague.next_user?.name || 'the next user'}.`
     : weeklyLeague?.current_user_position === 1
@@ -144,55 +158,87 @@ export default function Leaderboard() {
         </div>
 
         {isWeekly && weeklyLeague && (
-          <div className="mt-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
-                  Weekly League
-                </p>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                  {weeklyLeague.rank_name || userRankName}
-                </h2>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-                  {formatWeekDate(weeklyLeague.week_start)} - {formatWeekDate(weeklyLeague.week_end)}
-                </p>
+          <div className="mt-6 grid gap-4">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+                    Weekly League
+                  </p>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                    {weeklyLeague.rank_name || userRankName}
+                  </h2>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                    {formatWeekDate(weeklyLeague.week_start)} - {formatWeekDate(weeklyLeague.week_end)}
+                  </p>
+                </div>
+
+                <div className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-widest ${zoneClass(weeklyLeague.promotion_status)}`}>
+                  {zoneLabel(weeklyLeague.promotion_status)} Zone
+                </div>
               </div>
 
-              <div className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-widest ${zoneClass(weeklyLeague.promotion_status)}`}>
-                {zoneLabel(weeklyLeague.promotion_status)} Zone
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Position</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">
+                    {weeklyLeague.current_user_position ? `#${weeklyLeague.current_user_position}` : '-'}
+                    <span className="text-sm text-slate-400 dark:text-slate-500"> / {weeklyLeague.total_users || 0}</span>
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Weekly XP</p>
+                  <p className="text-lg font-black text-blue-600 dark:text-blue-400">{weeklyLeague.weekly_xp || 0}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Promotion</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                    {weeklyLeague.promotion_cutoff_position ? `Top ${weeklyLeague.promotion_cutoff_position}` : 'Not active'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Demotion</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                    {weeklyLeague.demotion_cutoff_position ? `#${weeklyLeague.demotion_cutoff_position}+` : 'Not active'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 px-4 py-3">
+                <p className="text-sm font-bold text-blue-800 dark:text-blue-200">
+                  {weeklyLeague.small_league_message || nextUserMessage}
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Position</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white">
-                  {weeklyLeague.current_user_position ? `#${weeklyLeague.current_user_position}` : '-'}
-                  <span className="text-sm text-slate-400 dark:text-slate-500"> / {weeklyLeague.total_users || 0}</span>
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Weekly XP</p>
-                <p className="text-lg font-black text-blue-600 dark:text-blue-400">{weeklyLeague.weekly_xp || 0}</p>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Promotion</p>
-                <p className="text-sm font-black text-slate-900 dark:text-white">
-                  {weeklyLeague.promotion_cutoff_position ? `Top ${weeklyLeague.promotion_cutoff_position}` : 'Not active'}
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Demotion</p>
-                <p className="text-sm font-black text-slate-900 dark:text-white">
-                  {weeklyLeague.demotion_cutoff_position ? `#${weeklyLeague.demotion_cutoff_position}+` : 'Not active'}
-                </p>
-              </div>
-            </div>
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+                    Weekly Result
+                  </p>
+                  {rankHistory.latest ? (
+                    <>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                        {rankHistory.latest.old_rank_name} to {rankHistory.latest.new_rank_name}
+                      </h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                        Week of {formatWeekDate(rankHistory.latest.week_start_date)} - {rankHistory.latest.weekly_xp} XP
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                      No weekly result yet. Your first weekly league result will appear after Sunday's reset.
+                    </p>
+                  )}
+                </div>
 
-            <div className="mt-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 px-4 py-3">
-              <p className="text-sm font-bold text-blue-800 dark:text-blue-200">
-                {weeklyLeague.small_league_message || nextUserMessage}
-              </p>
+                {rankHistory.latest && (
+                  <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-widest ${movementClass(rankHistory.latest.status)}`}>
+                    {movementLabel(rankHistory.latest.status)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
