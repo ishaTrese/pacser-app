@@ -19,7 +19,8 @@ export default function Dashboard() {
       attempts_remaining: 1,
       is_premium: false
     },
-    continue_learning: null
+    continue_learning: null,
+    streak_status: null
   })
   const [missions, setMissions] = useState([])
   const [claimingMissionId, setClaimingMissionId] = useState(null)
@@ -34,6 +35,7 @@ export default function Dashboard() {
           quiz_sets_done: res.data.quiz_sets_done,
           mastery: res.data.mastery,
           continue_learning: res.data.continue_learning || null,
+          streak_status: res.data.streak_status || null,
           mock_exam: res.data.mock_exam || {
             attempt_count: 0,
             can_take_mock_exam: true,
@@ -119,6 +121,18 @@ export default function Dashboard() {
     try {
       const res = await api.post(`/missions/${missionId}/claim`)
       setMissions(missions.map(mission => mission.id === missionId ? res.data.mission : mission))
+      if (res.data.mission?.mission_type === 'maintain_streak') {
+        setStats(prev => ({
+          ...prev,
+          streak_status: prev.streak_status ? {
+            ...prev.streak_status,
+            maintain_streak_mission: {
+              ...prev.streak_status.maintain_streak_mission,
+              ...res.data.mission
+            }
+          } : prev.streak_status
+        }))
+      }
       if (res.data.user) {
         updateUserStats(res.data.user)
       }
@@ -198,6 +212,7 @@ export default function Dashboard() {
   const dailyAction = getDailyAction()
   const DailyActionIcon = dailyAction.icon
   const continueLearning = stats.continue_learning
+  const streakStatus = stats.streak_status
   const continueLearningTitle = continueLearning?.quiz_set_title || 'Choose a reviewer subject'
   const continueLearningSubject = continueLearning?.subject_name || userClass || 'Reviewer'
   const continueLearningDescription = continueLearning?.message || (
@@ -235,6 +250,41 @@ export default function Dashboard() {
 
     navigate('/learn')
   }
+  const streakCtaLabel = !userClass
+    ? 'Select Category'
+    : !user?.pretest_completed
+      ? 'Take Pretest'
+      : continueLearning?.quiz_set_id && !continueLearning?.is_locked
+        ? 'Continue Quiz'
+        : 'Continue Learning'
+  const handleStreakAction = () => {
+    if (!userClass) {
+      navigate('/select-class')
+      return
+    }
+
+    if (!user?.pretest_completed) {
+      navigate('/pretest')
+      return
+    }
+
+    if (continueLearning?.quiz_set_id && !continueLearning?.is_locked) {
+      handleContinueLearning()
+      return
+    }
+
+    navigate('/learn')
+  }
+  const isStreakSafeToday = Boolean(streakStatus?.is_safe_today)
+  const streakMission = streakStatus?.maintain_streak_mission
+  const streakStatusTitle = isStreakSafeToday
+    ? 'Study streak secured today'
+    : streakStatus?.last_study_date
+      ? 'Study today to keep your streak alive'
+      : 'Start your study streak'
+  const streakStatusDescription = isStreakSafeToday
+    ? 'You completed a study activity today. Nice and tidy.'
+    : 'Complete a quiz, pretest, or mock exam to count today as a study day.'
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans pb-12 transition-colors">
@@ -328,6 +378,60 @@ export default function Dashboard() {
               <ChevronRight size={16} />
             </button>
           </div>
+        </div>
+
+        {/* Streak Status Card */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
+              isStreakSafeToday
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-700/50'
+                : 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-100 dark:border-yellow-700/50'
+            }`}>
+              <Flame size={24} className={isStreakSafeToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-500 dark:text-yellow-400'} />
+            </div>
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Study Streak</p>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                {streakStatus?.current_streak || 0} Day{(streakStatus?.current_streak || 0) === 1 ? '' : 's'} - {streakStatusTitle}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1 max-w-2xl">{streakStatusDescription}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {streakStatus?.streak_freeze_active && (
+                  <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-700/50 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                    Freeze Active
+                  </span>
+                )}
+                {!streakStatus?.streak_freeze_active && streakStatus?.inventory_streak_freezes > 0 && (
+                  <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                    {streakStatus.inventory_streak_freezes} Freeze{streakStatus.inventory_streak_freezes === 1 ? '' : 's'} Available
+                  </span>
+                )}
+                {streakMission && (
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                    streakMission.is_claimed
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                      : streakMission.is_completed
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-700/50'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+                  }`}>
+                    {streakMission.is_claimed
+                      ? 'Mission Claimed'
+                      : streakMission.is_completed
+                        ? `Mission Complete +${streakMission.points_reward} pts`
+                        : `Mission ${streakMission.progress}/${streakMission.target}`}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleStreakAction}
+            className="w-full lg:w-auto px-5 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs shrink-0"
+          >
+            {streakCtaLabel}
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         {/* Daily Missions Widget */}

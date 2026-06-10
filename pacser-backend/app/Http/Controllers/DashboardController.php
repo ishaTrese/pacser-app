@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateDailyMissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +46,7 @@ class DashboardController extends Controller
             'quiz_sets_done' => $quizSetsDone,
             'mastery' => $mastery,
             'continue_learning' => $level ? $this->getContinueLearning($user, $this->normalizeLevel($level)) : null,
+            'streak_status' => $this->getStreakStatus($user),
             'mock_exam' => [
                 'attempt_count' => $mockExamAttemptCount,
                 'can_take_mock_exam' => $isPremium || $mockExamAttemptCount < 1,
@@ -56,6 +58,34 @@ class DashboardController extends Controller
             // Include user data too so the frontend can refresh user state if needed
             'user' => $user
         ]);
+    }
+
+    private function getStreakStatus($user): array
+    {
+        $today = now()->toDateString();
+        GenerateDailyMissions::ensureForUser($user, $today);
+
+        $maintainStreakMission = DB::table('user_missions')
+            ->where('user_id', $user->id)
+            ->where('date', $today)
+            ->where('mission_type', 'maintain_streak')
+            ->first();
+
+        return [
+            'current_streak' => (int) $user->streak,
+            'last_study_date' => $user->last_study_date ? $user->last_study_date->toDateString() : null,
+            'is_safe_today' => $user->last_study_date && $user->last_study_date->toDateString() === $today,
+            'streak_freeze_active' => (bool) $user->streak_freeze_active,
+            'inventory_streak_freezes' => (int) $user->inventory_streak_freezes,
+            'maintain_streak_mission' => $maintainStreakMission ? [
+                'id' => $maintainStreakMission->id,
+                'is_completed' => (bool) $maintainStreakMission->is_completed,
+                'is_claimed' => (bool) $maintainStreakMission->is_claimed,
+                'progress' => (int) $maintainStreakMission->progress,
+                'target' => (int) $maintainStreakMission->target,
+                'points_reward' => (int) $maintainStreakMission->points_reward,
+            ] : null,
+        ];
     }
 
     private function normalizeLevel(?string $level): string
