@@ -13,6 +13,8 @@ class TestBankSeeder extends Seeder
 {
     public function run(): void
     {
+        $difficultyForOrder = fn (int $orderIndex) => $orderIndex === 3 ? 'difficult' : 'average';
+
         // Define our dense data array to minimize repetitive insertion logic
         // Format: [ 'q' => 'Question?', 'opts' => ['A', 'B', 'C', 'D'], 'ans' => 1 (Index of correct option), 'exp' => 'Explanation' ]
         
@@ -122,6 +124,8 @@ class TestBankSeeder extends Seeder
                 );
 
                 foreach ($subjectData['sets'] as $setName => $questions) {
+                    $orderIndex = 1;
+
                     // Fetch or Create the Quiz Set
                     $quizSet = QuizSet::firstOrCreate(
                         [
@@ -129,9 +133,15 @@ class TestBankSeeder extends Seeder
                             'name' => $setName
                         ],
                         [
-                            'order_index' => 1
+                            'order_index' => $orderIndex,
+                            'difficulty' => $difficultyForOrder($orderIndex),
                         ]
                     );
+
+                    if ($quizSet->difficulty !== $difficultyForOrder((int) $quizSet->order_index)) {
+                        $quizSet->difficulty = $difficultyForOrder((int) $quizSet->order_index);
+                        $quizSet->save();
+                    }
 
                     // If quiz set already has questions, skip insertion to prevent doubling data on re-seed
                     if ($quizSet->questions()->exists()) {

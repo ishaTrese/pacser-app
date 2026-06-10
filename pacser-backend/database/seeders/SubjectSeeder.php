@@ -12,6 +12,8 @@ class SubjectSeeder extends Seeder
 {
     public function run(): void
     {
+        $difficultyForOrder = fn (int $orderIndex) => $orderIndex === 3 ? 'difficult' : 'average';
+
         $subjects = [
             [
                 'name' => 'Numerical Ability',
@@ -123,6 +125,7 @@ class SubjectSeeder extends Seeder
                 ],
                 [
                     'name' => $subjectData['set'],
+                    'difficulty' => $difficultyForOrder(1),
                 ]
             );
 

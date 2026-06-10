@@ -9,7 +9,7 @@ class QuizSet extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['subject_id', 'name', 'order_index'];
+    protected $fillable = ['subject_id', 'name', 'order_index', 'difficulty'];
 
     public function subject()
     {
