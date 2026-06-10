@@ -11,6 +11,14 @@ export default function QuizResults() {
   const score = location.state?.score || 0;
   const total = location.state?.total || 0;
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+  const difficulty = location.state?.difficulty || 'average';
+  const difficultyMultiplier = Number(location.state?.difficulty_multiplier || 1);
+  const difficultyLabel = difficulty.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const difficultyBonusLabel = difficultyMultiplier > 1
+    ? `Challenge Reward +${Math.round((difficultyMultiplier - 1) * 100)}%`
+    : difficultyMultiplier < 1
+      ? `Practice Reward -${Math.round((1 - difficultyMultiplier) * 100)}%`
+      : 'Standard Reward';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans pb-12 transition-colors">
@@ -51,11 +59,33 @@ export default function QuizResults() {
           <div className="flex justify-center gap-6 mb-8">
             <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 rounded-xl px-5 py-3 text-center">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Earned XP</p>
-              <p className="text-blue-600 dark:text-blue-400 font-black text-xl">+{location.state?.xp_gained || 0}</p>
+              <p className="text-blue-600 dark:text-blue-400 font-black text-xl">+{location.state?.awarded_xp ?? location.state?.xp_gained ?? 0}</p>
             </div>
             <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-100 dark:border-yellow-700/50 rounded-xl px-5 py-3 text-center">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Earned Points</p>
-              <p className="text-yellow-600 dark:text-yellow-400 font-black text-xl">+{location.state?.points_gained || 0}</p>
+              <p className="text-yellow-600 dark:text-yellow-400 font-black text-xl">+{location.state?.awarded_points ?? location.state?.points_gained ?? 0}</p>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 mb-8 text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Difficulty</p>
+                <p className="text-slate-900 dark:text-white font-black">{difficultyLabel}</p>
+              </div>
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-black text-blue-600 dark:text-blue-400">
+                {difficultyBonusLabel}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Base XP</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{location.state?.base_xp ?? '--'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Base Points</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{location.state?.base_points ?? '--'}</p>
+              </div>
             </div>
           </div>
 

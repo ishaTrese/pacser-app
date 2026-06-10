@@ -55,11 +55,14 @@ class QuizController extends Controller
     {
         $validated = $request->validate([
             'quiz_set_id' => 'required|exists:quiz_sets,id',
-            'score' => 'required|numeric',
-            'total' => 'required|numeric',
+            'score' => 'required|numeric|min:0|lte:total',
+            'total' => 'required|numeric|min:1',
         ]);
 
         $percentage = ($validated['score'] / $validated['total']) * 100;
+        $quizSet = QuizSet::findOrFail($validated['quiz_set_id']);
+        $difficulty = $this->normalizeDifficulty($quizSet->difficulty);
+        $difficultyMultiplier = $this->difficultyMultiplier($difficulty);
 
         $log = QuizLog::create([
             'user_id' => $request->user()->id,
@@ -111,8 +114,8 @@ class QuizController extends Controller
             $pointsMultiplier += 0.50;
         }
 
-        $xpGained = (int) round($baseXp * $xpMultiplier);
-        $pointsGained = (int) round($basePoints * $pointsMultiplier);
+        $xpGained = (int) round($baseXp * $difficultyMultiplier * $xpMultiplier);
+        $pointsGained = (int) round($basePoints * $difficultyMultiplier * $pointsMultiplier);
 
         // Apply Double XP Boost if active (shop item)
         if ($user->double_xp_until && \Carbon\Carbon::parse($user->double_xp_until)->isFuture()) {
@@ -154,7 +157,29 @@ class QuizController extends Controller
             'percentage' => $percentage,
             'xp_gained' => $xpGained,
             'points_gained' => $pointsGained,
+            'difficulty' => $difficulty,
+            'difficulty_multiplier' => $difficultyMultiplier,
+            'base_xp' => $baseXp,
+            'awarded_xp' => $xpGained,
+            'base_points' => $basePoints,
+            'awarded_points' => $pointsGained,
             'log' => $log
         ]);
+    }
+
+    private function normalizeDifficulty(?string $difficulty): string
+    {
+        return in_array($difficulty, ['easy', 'average', 'difficult'], true)
+            ? $difficulty
+            : 'average';
+    }
+
+    private function difficultyMultiplier(string $difficulty): float
+    {
+        return match ($difficulty) {
+            'easy' => 0.75,
+            'difficult' => 1.5,
+            default => 1.0,
+        };
     }
 }
