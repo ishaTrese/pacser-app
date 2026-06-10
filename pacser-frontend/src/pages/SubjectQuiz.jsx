@@ -150,6 +150,12 @@ export default function SubjectQuiz() {
             percentage: res.data.log.percentage,
             xp_gained: res.data.xp_gained,
             points_gained: res.data.points_gained,
+            difficulty: res.data.difficulty,
+            difficulty_multiplier: res.data.difficulty_multiplier,
+            base_xp: res.data.base_xp,
+            awarded_xp: res.data.awarded_xp,
+            base_points: res.data.base_points,
+            awarded_points: res.data.awarded_points,
             subjectId: resolvedSubjectId // Pass string slug to results so Retry works
           } 
         });
