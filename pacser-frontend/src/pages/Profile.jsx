@@ -4,9 +4,11 @@ import { Shield, Star, Flame, Target, Zap, Award, BookOpen, Clock } from 'lucide
 import { useAuth } from '../context/AuthContext';
 import CategoryBadge from '../components/ui/CategoryBadge';
 import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  const { user, updateUserStats } = useAuth();
+  const { user, updateUserStats, userClass } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Overview');
   const [stats, setStats] = useState(null);
   const [mockExam, setMockExam] = useState(null);
@@ -99,6 +101,43 @@ export default function Profile() {
   };
 
   const visibleMockExamHistory = mockExamHistory.slice(0, 3);
+  const mockAttemptCount = mockExam?.attempt_count || 0;
+  const isPremium = !!user?.is_premium;
+  const hasCategory = !!userClass;
+  const latestMockResult = mockExam?.latest_result || null;
+  const bestMockResult = mockExam?.best_result || null;
+  const mockStatusTitle = isPremium
+    ? 'Unlimited mock exam retakes'
+    : mockAttemptCount > 0
+      ? 'Free attempt used'
+      : '1 free attempt available';
+  const mockStatusCopy = isPremium
+    ? 'Premium is active, so you can retake the mock exam whenever you want to check readiness.'
+    : mockAttemptCount > 0
+      ? 'Free users get 1 mock exam attempt. Premium unlocks unlimited retakes for more readiness checks.'
+      : 'Use your free mock exam attempt when you are ready to simulate exam conditions.';
+
+  const handleMockExamCta = () => {
+    if (!hasCategory) {
+      navigate('/select-class');
+      return;
+    }
+
+    if (!isPremium && mockAttemptCount > 0) {
+      setActiveTab('Account');
+      return;
+    }
+
+    navigate('/mock-exam');
+  };
+
+  const mockExamCtaLabel = !hasCategory
+    ? 'Select Category'
+    : !isPremium && mockAttemptCount > 0
+      ? 'Redeem Access Code'
+      : mockAttemptCount > 0
+        ? 'Retake Mock Exam'
+        : 'Take Mock Exam';
 
 
 
@@ -226,27 +265,47 @@ export default function Profile() {
 
               {activeTab === 'Mock Exams' && (
                 <div className="flex flex-col gap-6">
-                  {mockExam?.attempt_count > 0 && (
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
-                      <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
-                        <Target size={20} className="text-blue-500" />
-                        Mock Exam Performance
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
-                          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Best Score</p>
-                          <p className="text-slate-900 dark:text-white font-black text-xl">{formatMockResult(mockExam.best_result)}</p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
-                          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Latest Attempt</p>
-                          <p className="text-slate-900 dark:text-white font-black text-xl">{formatMockResult(mockExam.latest_result)}</p>
-                          <p className={`text-xs font-bold uppercase tracking-widest mt-2 ${mockExam.latest_result?.passed ? 'text-emerald-500' : 'text-amber-500'}`}>
-                            {mockExam.latest_result?.passed ? 'Passed' : 'Needs Review'}
-                          </p>
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 shadow-lg transition-colors">
+                      <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Attempts</p>
+                      <p className="text-slate-900 dark:text-white font-black text-2xl">{mockAttemptCount}</p>
                     </div>
-                  )}
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 shadow-lg transition-colors">
+                      <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Best Score</p>
+                      <p className="text-slate-900 dark:text-white font-black text-lg">{formatMockResult(bestMockResult)}</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 shadow-lg transition-colors">
+                      <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Latest Score</p>
+                      <p className="text-slate-900 dark:text-white font-black text-lg">{formatMockResult(latestMockResult)}</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 shadow-lg transition-colors">
+                      <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Latest Status</p>
+                      <p className={`font-black text-lg ${latestMockResult?.passed ? 'text-emerald-500' : latestMockResult ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
+                        {latestMockResult ? (latestMockResult.passed ? 'Passed' : 'Needs Review') : 'No attempt'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-1 flex items-center gap-2">
+                          <Target size={20} className="text-blue-500" />
+                          {mockStatusTitle}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium max-w-xl">
+                          {mockStatusCopy}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleMockExamCta}
+                        className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 px-5 rounded-lg transition-all shadow-md uppercase tracking-widest shrink-0"
+                      >
+                        {mockExamCtaLabel}
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
                     <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
@@ -259,9 +318,19 @@ export default function Profile() {
 
                     {mockExamHistory.length === 0 ? (
                       <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        <p className="text-sm text-slate-900 dark:text-white font-black mb-1">
                           No mock exam attempts yet.
                         </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">
+                          Mock exams simulate Civil Service Exam conditions and help you check readiness before test day.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleMockExamCta}
+                          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 px-5 rounded-lg transition-all shadow-md uppercase tracking-widest"
+                        >
+                          {mockExamCtaLabel}
+                        </button>
                       </div>
                     ) : (
                       <div className="flex flex-col gap-4">
