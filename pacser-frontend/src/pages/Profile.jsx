@@ -13,7 +13,6 @@ export default function Profile() {
   const [mockExamHistory, setMockExamHistory] = useState([]);
   const [expandedAttemptId, setExpandedAttemptId] = useState(null);
   const [badges, setBadges] = useState([]);
-  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -35,10 +34,6 @@ export default function Profile() {
         updateUserStats(res.data.user);
         setEmail(res.data.user.email);
       }
-
-      // Fetch Missions
-      const missionRes = await api.get('/missions');
-      setMissions(missionRes.data.missions);
 
       const historyRes = await api.get('/mock-exam/history');
       setMockExamHistory(historyRes.data.attempts || []);
@@ -73,19 +68,6 @@ export default function Profile() {
       setCode('');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to redeem code');
-    }
-  };
-
-  const handleClaimMission = async (missionId) => {
-    try {
-      const res = await api.post(`/missions/${missionId}/claim`);
-      alert(`Claimed! +${res.data.points_awarded} Points`);
-      if (res.data.user) {
-        updateUserStats(res.data.user);
-      }
-      setMissions(missions.map(m => m.id === missionId ? res.data.mission : m));
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to claim reward');
     }
   };
 
@@ -170,7 +152,7 @@ export default function Profile() {
 
             {/* Tabs Header */}
             <div className="flex gap-6 border-b border-slate-200 dark:border-slate-700 mb-5 shrink-0 transition-colors">
-              {['Overview', 'Missions', 'Badges', 'Account'].map(tab => (
+              {['Overview', 'Mock Exams', 'Achievements', 'Account'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -213,6 +195,37 @@ export default function Profile() {
                     </div>
                   </div>
 
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                      Daily missions are now handled from the Dashboard so this profile can focus on your progress history.
+                    </p>
+                  </div>
+
+                  {/* Rank Perks Section */}
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Shield size={20} className="text-yellow-500" />
+                      My Rank Perks
+                    </h3>
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                      <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2 font-medium">
+                        {user?.rank_id === 1 && <li>• Base XP and Points</li>}
+                        {user?.rank_id === 2 && <li>• +5% XP Bonus</li>}
+                        {user?.rank_id === 3 && <li>• +10% XP, +5% Points</li>}
+                        {user?.rank_id === 4 && <li>• +15% XP, +10% Points, 1 free Energy refill/week</li>}
+                        {user?.rank_id === 5 && <li>• +20% XP, +15% Points, 2 free Energy refills/week</li>}
+                        {user?.rank_id === 6 && <li>• +25% XP, +20% Points, 1 free Streak Freeze/week</li>}
+                        {user?.rank_id === 7 && <li>• +30% XP, +25% Points, Double XP on Mondays</li>}
+                        {user?.rank_id === 8 && <li>• +50% XP, +50% Points, All perks unlocked permanently</li>}
+                      </ul>
+                      <p className="text-xs text-slate-400 mt-4 italic">Rank up in the weekly leaderboard to unlock better perks!</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'Mock Exams' && (
+                <div className="flex flex-col gap-6">
                   {mockExam?.attempt_count > 0 && (
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg transition-colors">
                       <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
@@ -312,89 +325,10 @@ export default function Profile() {
                       </div>
                     )}
                   </div>
-
-                  {/* Rank Perks Section */}
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
-                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
-                      <Shield size={20} className="text-yellow-500" />
-                      My Rank Perks
-                    </h3>
-                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
-                      <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2 font-medium">
-                        {user?.rank_id === 1 && <li>• Base XP and Points</li>}
-                        {user?.rank_id === 2 && <li>• +5% XP Bonus</li>}
-                        {user?.rank_id === 3 && <li>• +10% XP, +5% Points</li>}
-                        {user?.rank_id === 4 && <li>• +15% XP, +10% Points, 1 free Energy refill/week</li>}
-                        {user?.rank_id === 5 && <li>• +20% XP, +15% Points, 2 free Energy refills/week</li>}
-                        {user?.rank_id === 6 && <li>• +25% XP, +20% Points, 1 free Streak Freeze/week</li>}
-                        {user?.rank_id === 7 && <li>• +30% XP, +25% Points, Double XP on Mondays</li>}
-                        {user?.rank_id === 8 && <li>• +50% XP, +50% Points, All perks unlocked permanently</li>}
-                      </ul>
-                      <p className="text-xs text-slate-400 mt-4 italic">Rank up in the weekly leaderboard to unlock better perks!</p>
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {activeTab === 'Missions' && (
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
-                  <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
-                    <Target size={20} className="text-blue-500" />
-                    Daily Missions
-                  </h3>
-                  {missions.length === 0 ? (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">No missions available today.</p>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {missions.map(mission => {
-                        let title = "";
-                        if (mission.mission_type === 'complete_2_quiz_sets') title = "Complete 2 Quiz Sets";
-                        else if (mission.mission_type === 'score_80_percent') title = "Score 80% or Higher on a Quiz";
-                        else if (mission.mission_type === 'earn_100_xp') title = "Earn 100 XP";
-                        else if (mission.mission_type === 'maintain_streak') title = "Maintain Your Daily Streak";
-
-                        const isCompleted = mission.is_completed;
-                        const isClaimed = mission.is_claimed;
-                        const progressPercent = Math.min(100, (mission.progress / mission.target) * 100);
-
-                        return (
-                          <div key={mission.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                            <div className="flex-1 mr-4">
-                              <div className="flex justify-between items-end mb-2">
-                                <h4 className="text-sm font-bold text-slate-800 dark:text-white">{title}</h4>
-                                <span className="text-xs font-bold text-emerald-500">+{mission.points_reward} pts</span>
-                              </div>
-                              <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'} transition-all`}
-                                  style={{ width: `${progressPercent}%` }}
-                                ></div>
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{mission.progress} / {mission.target}</p>
-                            </div>
-
-                            <button
-                              onClick={() => handleClaimMission(mission.id)}
-                              disabled={!isCompleted || isClaimed}
-                              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shrink-0 ${
-                                isClaimed
-                                  ? 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
-                                  : isCompleted
-                                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md'
-                                    : 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500 cursor-not-allowed'
-                              }`}
-                            >
-                              {isClaimed ? 'Claimed' : 'Claim'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'Badges' && (
+              {activeTab === 'Achievements' && (
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 place-items-center">
                     {badges.map((badge, idx) => {
