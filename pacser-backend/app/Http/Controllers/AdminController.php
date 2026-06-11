@@ -140,13 +140,93 @@ class AdminController extends Controller
         }
 
         $quizSets = \App\Models\QuizSet::with('subject')
+            ->withCount('questions')
             ->orderBy('subject_id')
             ->orderBy('order_index')
-            ->get();
+            ->get()
+            ->map(fn ($quizSet) => $this->formatQuizSet($quizSet));
 
         return response()->json([
-            'quiz_sets' => $quizSets
+            'quiz_sets' => $quizSets,
+            'subjects' => \App\Models\Subject::orderBy('name')->get(),
         ]);
+    }
+
+    public function getQuizSet(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $quizSet = \App\Models\QuizSet::with('subject')
+            ->withCount('questions')
+            ->findOrFail($id);
+
+        return response()->json([
+            'quiz_set' => $this->formatQuizSet($quizSet),
+        ]);
+    }
+
+    public function createQuizSet(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $this->validateQuizSetPayload($request);
+
+        $quizSet = \App\Models\QuizSet::create([
+            'subject_id' => $validated['subject_id'],
+            'name' => trim($validated['name']),
+            'order_index' => $validated['order_index'],
+            'difficulty' => $validated['difficulty'],
+        ]);
+
+        return response()->json([
+            'message' => 'Quiz set created successfully',
+            'quiz_set' => $this->formatQuizSet($quizSet->load('subject')->loadCount('questions')),
+        ], 201);
+    }
+
+    public function updateQuizSet(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $quizSet = \App\Models\QuizSet::findOrFail($id);
+        $validated = $this->validateQuizSetPayload($request, $quizSet->id);
+
+        $quizSet->update([
+            'subject_id' => $validated['subject_id'],
+            'name' => trim($validated['name']),
+            'order_index' => $validated['order_index'],
+            'difficulty' => $validated['difficulty'],
+        ]);
+
+        return response()->json([
+            'message' => 'Quiz set updated successfully',
+            'quiz_set' => $this->formatQuizSet($quizSet->load('subject')->loadCount('questions')),
+        ]);
+    }
+
+    public function deleteQuizSet(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $quizSet = \App\Models\QuizSet::withCount('questions')->findOrFail($id);
+
+        if ($quizSet->questions_count > 0) {
+            return response()->json([
+                'message' => 'Cannot delete a quiz set that already has questions.',
+            ], 422);
+        }
+
+        $quizSet->delete();
+
+        return response()->json(['message' => 'Quiz set deleted successfully']);
     }
 
     public function createQuestion(Request $request)
@@ -261,5 +341,50 @@ class AdminController extends Controller
         }
 
         return $validated;
+    }
+
+    private function validateQuizSetPayload(Request $request, ?int $ignoreQuizSetId = null): array
+    {
+        $validated = $request->validate([
+            'subject_id' => 'required|integer|exists:subjects,id',
+            'name' => 'required|string|max:255',
+            'order_index' => 'required|integer|min:1',
+            'difficulty' => 'required|in:easy,average,difficult',
+        ]);
+
+        if (trim($validated['name']) === '') {
+            throw ValidationException::withMessages([
+                'name' => ['Quiz set name cannot be blank.'],
+            ]);
+        }
+
+        $duplicateQuery = \App\Models\QuizSet::where('subject_id', $validated['subject_id'])
+            ->where('order_index', $validated['order_index']);
+
+        if ($ignoreQuizSetId) {
+            $duplicateQuery->where('id', '!=', $ignoreQuizSetId);
+        }
+
+        if ($duplicateQuery->exists()) {
+            throw ValidationException::withMessages([
+                'order_index' => ['This subject already has a quiz set with that order.'],
+            ]);
+        }
+
+        return $validated;
+    }
+
+    private function formatQuizSet(\App\Models\QuizSet $quizSet): array
+    {
+        return [
+            'id' => $quizSet->id,
+            'subject_id' => $quizSet->subject_id,
+            'name' => $quizSet->name,
+            'order_index' => $quizSet->order_index,
+            'difficulty' => $quizSet->difficulty ?? 'average',
+            'subject' => $quizSet->subject,
+            'questions_count' => $quizSet->questions_count ?? $quizSet->questions()->count(),
+            'is_premium' => (int) $quizSet->order_index === 3,
+        ];
     }
 }

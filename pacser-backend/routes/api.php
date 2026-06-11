@@ -44,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/god-mode', [\App\Http\Controllers\AdminController::class, 'godModeUpdate']);
     Route::get('/admin/stats', [\App\Http\Controllers\AdminController::class, 'stats']);
     Route::get('/admin/quiz-sets', [\App\Http\Controllers\AdminController::class, 'getQuizSets']);
+    Route::get('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'getQuizSet']);
+    Route::post('/admin/quiz-sets', [\App\Http\Controllers\AdminController::class, 'createQuizSet']);
+    Route::put('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuizSet']);
+    Route::delete('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'deleteQuizSet']);
     Route::get('/admin/questions', [\App\Http\Controllers\AdminController::class, 'getQuestions']);
     Route::get('/admin/questions/{id}', [\App\Http\Controllers\AdminController::class, 'getQuestion']);
     Route::post('/admin/questions', [\App\Http\Controllers\AdminController::class, 'createQuestion']);
