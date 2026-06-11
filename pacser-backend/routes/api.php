@@ -49,6 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuizSet']);
     Route::delete('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'deleteQuizSet']);
     Route::get('/admin/questions', [\App\Http\Controllers\AdminController::class, 'getQuestions']);
+    Route::get('/admin/questions/export', [\App\Http\Controllers\AdminController::class, 'exportQuestions']);
+    Route::post('/admin/questions/import-preview', [\App\Http\Controllers\AdminController::class, 'importQuestionsPreview']);
+    Route::post('/admin/questions/import', [\App\Http\Controllers\AdminController::class, 'importQuestions']);
     Route::get('/admin/questions/{id}', [\App\Http\Controllers\AdminController::class, 'getQuestion']);
     Route::post('/admin/questions', [\App\Http\Controllers\AdminController::class, 'createQuestion']);
     Route::put('/admin/questions/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuestion']);

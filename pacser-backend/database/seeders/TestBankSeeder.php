@@ -14,6 +14,7 @@ class TestBankSeeder extends Seeder
     public function run(): void
     {
         $difficultyForOrder = fn (int $orderIndex) => $orderIndex === 3 ? 'difficult' : 'average';
+        $premiumForOrder = fn (int $orderIndex) => $orderIndex === 3;
 
         // Define our dense data array to minimize repetitive insertion logic
         // Format: [ 'q' => 'Question?', 'opts' => ['A', 'B', 'C', 'D'], 'ans' => 1 (Index of correct option), 'exp' => 'Explanation' ]
@@ -135,11 +136,16 @@ class TestBankSeeder extends Seeder
                         [
                             'order_index' => $orderIndex,
                             'difficulty' => $difficultyForOrder($orderIndex),
+                            'is_premium' => $premiumForOrder($orderIndex),
                         ]
                     );
 
-                    if ($quizSet->difficulty !== $difficultyForOrder((int) $quizSet->order_index)) {
+                    if (
+                        $quizSet->difficulty !== $difficultyForOrder((int) $quizSet->order_index)
+                        || (bool) $quizSet->is_premium !== $premiumForOrder((int) $quizSet->order_index)
+                    ) {
                         $quizSet->difficulty = $difficultyForOrder((int) $quizSet->order_index);
+                        $quizSet->is_premium = $premiumForOrder((int) $quizSet->order_index);
                         $quizSet->save();
                     }
 

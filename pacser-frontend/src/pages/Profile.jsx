@@ -224,7 +224,7 @@ export default function Profile() {
         : 'Take Mock Exam';
   const premiumBenefits = [
     'Unlimited mock exam retakes',
-    'Premium Set 3 quiz access',
+    'Premium quiz set access',
     'More advanced practice',
   ];
 

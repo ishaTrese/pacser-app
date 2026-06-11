@@ -363,8 +363,8 @@ export default function Dashboard() {
     : hasUsedFreeMockAttempt
       ? 'Your free mock exam attempt is used. Premium lets you retake full-length exams and track progress over time.'
       : hasPremiumLockedRecommendation
-        ? `${continueLearning.quiz_set_title} is a Premium Set 3 quiz. Unlock it when you are ready for advanced practice.`
-        : 'Use Premium for unlimited mock exam retakes, Set 3 quiz access, and extra practice when you need more reps.'
+        ? `${continueLearning.quiz_set_title} is a Premium quiz set. Unlock it when you are ready for advanced practice.`
+        : 'Use Premium for unlimited mock exam retakes, premium quiz set access, and extra practice when you need more reps.'
   const premiumPrimaryLabel = !userClass
     ? 'Select Category'
     : isPremiumUser
@@ -724,7 +724,7 @@ export default function Dashboard() {
                   Unlimited Retakes
                 </span>
                 <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                  Premium Set 3
+                  Premium quiz sets
                 </span>
                 <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
                   Extra Practice

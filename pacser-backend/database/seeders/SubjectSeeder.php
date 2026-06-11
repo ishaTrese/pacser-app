@@ -31,6 +31,7 @@ class SubjectSeeder extends Seeder
                         [
                             'name' => $setData['name'],
                             'difficulty' => $setData['difficulty'],
+                            'is_premium' => $setData['is_premium'],
                         ]
                     );
 
@@ -278,6 +279,7 @@ class SubjectSeeder extends Seeder
             'name' => $name,
             'order_index' => $orderIndex,
             'difficulty' => $difficulty,
+            'is_premium' => $orderIndex === 3,
             'questions' => $questions,
         ];
     }

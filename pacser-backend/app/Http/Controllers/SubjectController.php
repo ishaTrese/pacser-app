@@ -26,7 +26,7 @@ class SubjectController extends Controller
         // For iteration 2, we will just return them.
         // We will mock the questions count or time later, or fetch it.
         $mapped = $quizSets->map(function ($set) use ($user, $quizLogs) {
-            $isPremiumSet = $set->order_index == 3;
+            $isPremiumSet = (bool) $set->is_premium;
             $setLogs = $quizLogs->get($set->id, collect());
             $isCompleted = $setLogs->isNotEmpty();
             $status = ($isPremiumSet && !$user->is_premium)

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/layout/Navbar';
 import api from '../../api/axios';
-import { Users, FileText, Database, Edit, Plus, Trash2, Save, X } from 'lucide-react';
+import { Users, FileText, Database, Edit, Plus, Trash2, Save, X, Upload, Download } from 'lucide-react';
 
 const defaultPagination = {
   current_page: 1,
@@ -29,6 +29,7 @@ const defaultQuizSetForm = {
   name: '',
   order_index: 1,
   difficulty: 'average',
+  is_premium: false,
 };
 
 export default function AdminDashboard() {
@@ -47,6 +48,12 @@ export default function AdminDashboard() {
   const [quizSetMessage, setQuizSetMessage] = useState('');
   const [quizSetErrors, setQuizSetErrors] = useState([]);
   const [quizSetForm, setQuizSetForm] = useState(defaultQuizSetForm);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const [importErrors, setImportErrors] = useState([]);
 
   const visibleQuizSets = useMemo(() => {
     if (!filters.subject_id) return quizSets;
@@ -214,6 +221,7 @@ export default function AdminDashboard() {
       name: quizSet.name,
       order_index: quizSet.order_index,
       difficulty: quizSet.difficulty || 'average',
+      is_premium: !!quizSet.is_premium,
     });
     setQuizSetErrors([]);
     setQuizSetMessage('');
@@ -236,6 +244,7 @@ export default function AdminDashboard() {
       name: quizSetForm.name,
       order_index: Number(quizSetForm.order_index),
       difficulty: quizSetForm.difficulty,
+      is_premium: !!quizSetForm.is_premium,
     };
 
     try {
@@ -272,6 +281,106 @@ export default function AdminDashboard() {
         console.error('Failed to delete quiz set', err);
         setQuizSetErrors(formatBackendErrors(err, 'Failed to delete quiz set.'));
       }
+    }
+  };
+
+  const selectedImportFile = (file) => {
+    setImportFile(file);
+    setImportPreview(null);
+    setImportMessage('');
+    setImportErrors([]);
+  };
+
+  const previewImport = async () => {
+    if (!importFile) {
+      setImportErrors(['Choose a CSV file first.']);
+      return;
+    }
+
+    setImportLoading(true);
+    setImportErrors([]);
+    setImportMessage('');
+    setImportPreview(null);
+
+    const formData = new FormData();
+    formData.append('file', importFile);
+
+    try {
+      const res = await api.post('/admin/questions/import-preview', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportPreview(res.data);
+      setImportMessage('Preview complete. Review errors and duplicate warnings before importing.');
+    } catch (err) {
+      console.error('Import preview failed', err);
+      setImportErrors(formatBackendErrors(err, 'Failed to preview import.'));
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const runImport = async () => {
+    if (!importFile || !importPreview || importPreview.invalid_row_count > 0) return;
+
+    setImportLoading(true);
+    setImportErrors([]);
+    setImportMessage('');
+
+    const formData = new FormData();
+    formData.append('file', importFile);
+
+    try {
+      const res = await api.post('/admin/questions/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportMessage(`Import complete. Imported ${res.data.imported_count || 0} questions and skipped ${res.data.skipped_duplicate_count || 0} duplicates.`);
+      setImportPreview(null);
+      setImportFile(null);
+      await fetchQuizSets();
+      const statsRes = await api.get('/admin/stats');
+      setStats(statsRes.data);
+      fetchQuestions(filters.page);
+    } catch (err) {
+      console.error('Import failed', err);
+      setImportErrors(formatBackendErrors(err, 'Failed to import CSV.'));
+      if (err.response?.data?.summary) {
+        setImportPreview(err.response.data.summary);
+      }
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const exportQuestions = async () => {
+    const params = new URLSearchParams();
+    ['subject_id', 'quiz_set_id', 'difficulty', 'is_pretest', 'search'].forEach((key) => {
+      if (filters[key]) {
+        params.set(key, filters[key]);
+      }
+    });
+
+    const query = params.toString();
+
+    setExportLoading(true);
+    setImportErrors([]);
+
+    try {
+      const res = await api.get(`/admin/questions/export${query ? `?${query}` : ''}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'pacser-question-bank.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed', err);
+      setImportErrors(['Failed to export question bank CSV.']);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -338,6 +447,16 @@ export default function AdminDashboard() {
             }`}
           >
             Quiz Sets
+          </button>
+          <button
+            onClick={() => setActiveTab('import_export')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+              activeTab === 'import_export'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
+            }`}
+          >
+            Import / Export
           </button>
         </div>
 
@@ -522,7 +641,7 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-bold text-slate-900">
                   {quizSetForm.id ? 'Edit Quiz Set' : 'Create Quiz Set'}
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">Order 3 is treated as Premium Set 3 for free users.</p>
+                <p className="text-sm text-slate-500 mt-1">Order controls display sequence only. Premium access is controlled separately.</p>
               </div>
 
               <div className="p-6 space-y-4">
@@ -593,11 +712,18 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {Number(quizSetForm.order_index) === 3 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800">
-                    This quiz set will be treated as Premium Set 3.
-                  </div>
-                )}
+                <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={quizSetForm.is_premium}
+                    onChange={(e) => updateQuizSetForm('is_premium', e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-bold text-slate-800">Premium Set</span>
+                    <span className="block text-xs text-slate-500">Free users will see this quiz set as locked.</span>
+                  </span>
+                </label>
 
                 <div className="flex gap-2">
                   <button
@@ -658,7 +784,7 @@ export default function AdminDashboard() {
                         <td className="p-4 text-sm text-slate-600">{set.questions_count || 0}</td>
                         <td className="p-4">
                           {set.is_premium ? (
-                            <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded">Premium Set 3</span>
+                            <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded">Premium</span>
                           ) : (
                             <span className="bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">Free</span>
                           )}
@@ -684,6 +810,173 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'import_export' && (
+          <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-fit">
+              <div className="p-6 border-b border-slate-200 bg-slate-50">
+                <h2 className="text-xl font-bold text-slate-900">Import Questions</h2>
+                <p className="text-sm text-slate-500 mt-1">Preview the CSV first. Actual import skips duplicates and does not overwrite existing questions.</p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
+                  <p className="font-bold mb-1">Required CSV columns</p>
+                  <p className="leading-relaxed">
+                    subject_slug, quiz_set_order, quiz_set_name, difficulty, is_pretest,
+                    question_text, choice_a, choice_b, choice_c, choice_d, correct_choice, explanation
+                  </p>
+                </div>
+
+                {importMessage && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-bold text-green-700">
+                    {importMessage}
+                  </div>
+                )}
+
+                {importErrors.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <p className="font-bold mb-1">Import issue</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {importErrors.map((errorItem, index) => (
+                        <li key={`${errorItem}-${index}`}>{errorItem}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => selectedImportFile(e.target.files?.[0] || null)}
+                  className="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                />
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    onClick={previewImport}
+                    disabled={importLoading || !importFile}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Upload size={16} /> {importLoading ? 'Checking...' : 'Preview CSV'}
+                  </button>
+                  <button
+                    onClick={runImport}
+                    disabled={importLoading || !importPreview || importPreview.invalid_row_count > 0}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save size={16} /> Run Import
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Export Question Bank</h2>
+                    <p className="text-sm text-slate-500">Exports CSV using the same columns as import. Current question filters are included.</p>
+                  </div>
+                  <button
+                    onClick={exportQuestions}
+                    disabled={exportLoading}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Download size={16} /> {exportLoading ? 'Exporting...' : 'Export CSV'}
+                  </button>
+                </div>
+              </div>
+
+              {importPreview && (
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="p-6 border-b border-slate-200 bg-slate-50">
+                    <h2 className="text-xl font-bold text-slate-900">Preview Summary</h2>
+                    <p className="text-sm text-slate-500">Review this before running the import.</p>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="rounded-xl border border-slate-200 p-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">Valid Rows</p>
+                        <p className="text-2xl font-black text-slate-900">{importPreview.valid_row_count || 0}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 p-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">Invalid Rows</p>
+                        <p className="text-2xl font-black text-red-600">{importPreview.invalid_row_count || 0}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 p-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">To Create</p>
+                        <p className="text-2xl font-black text-green-600">{importPreview.questions_to_create?.length || 0}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 p-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">Duplicates</p>
+                        <p className="text-2xl font-black text-amber-600">{importPreview.questions_to_skip?.length || 0}</p>
+                      </div>
+                    </div>
+
+                    {importPreview.quiz_sets_to_create?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900 mb-2">Quiz Sets To Create</h3>
+                        <div className="rounded-xl border border-slate-200 overflow-hidden">
+                          {importPreview.quiz_sets_to_create.map((set) => (
+                            <div key={set.cache_key} className="p-3 border-b last:border-b-0 border-slate-100 text-sm text-slate-700">
+                              <span className="font-bold">{set.subject_slug}</span> - Set {set.order_index}: {set.name} ({set.difficulty})
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {importPreview.row_errors?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-black text-red-700 mb-2">Row Errors</h3>
+                        <div className="rounded-xl border border-red-200 overflow-hidden">
+                          {importPreview.row_errors.map((rowError) => (
+                            <div key={rowError.row} className="p-3 border-b last:border-b-0 border-red-100 text-sm text-red-700">
+                              <span className="font-bold">Row {rowError.row}:</span> {rowError.errors.join(' ')}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {importPreview.duplicate_warnings?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-black text-amber-700 mb-2">Duplicate Warnings</h3>
+                        <div className="rounded-xl border border-amber-200 overflow-hidden">
+                          {importPreview.duplicate_warnings.map((warning) => (
+                            <div key={`${warning.row}-${warning.question_text}`} className="p-3 border-b last:border-b-0 border-amber-100 text-sm text-amber-700">
+                              <span className="font-bold">Row {warning.row}:</span> {warning.reason}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {importPreview.questions_to_create?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900 mb-2">Questions To Create</h3>
+                        <div className="rounded-xl border border-slate-200 overflow-hidden max-h-72 overflow-y-auto">
+                          {importPreview.questions_to_create.slice(0, 20).map((question) => (
+                            <div key={`${question.row}-${question.question_text}`} className="p-3 border-b last:border-b-0 border-slate-100 text-sm text-slate-700">
+                              <span className="font-bold">Row {question.row}:</span> {question.question_text}
+                            </div>
+                          ))}
+                          {importPreview.questions_to_create.length > 20 && (
+                            <div className="p-3 text-sm text-slate-500">
+                              Showing first 20 of {importPreview.questions_to_create.length} questions.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -196,6 +196,7 @@ class DashboardController extends Controller
                 'quiz_sets.id',
                 'quiz_sets.name',
                 'quiz_sets.order_index',
+                'quiz_sets.is_premium',
                 'subjects.id as subject_id',
                 'subjects.name as subject_name',
                 'subjects.slug as subject_slug'
@@ -262,7 +263,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $isPremiumSet = (int) $quizSet->order_index === 3;
+        $isPremiumSet = (bool) ($quizSet->is_premium ?? false);
         $isLocked = $isPremiumSet && !$user->is_premium;
 
         return [

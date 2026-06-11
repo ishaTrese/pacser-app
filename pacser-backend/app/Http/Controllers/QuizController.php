@@ -299,7 +299,7 @@ class QuizController extends Controller
 
     private function authorizeQuizSetAccess($user, QuizSet $quizSet): void
     {
-        if ($user->role !== 'admin' && $quizSet->order_index == 3 && !$user->is_premium) {
+        if ($user->role !== 'admin' && $quizSet->is_premium && !$user->is_premium) {
             throw new HttpResponseException(response()->json([
                 'message' => 'This quiz set requires Premium access.'
             ], 403));
