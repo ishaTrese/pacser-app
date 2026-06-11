@@ -15,6 +15,7 @@ export default function Profile() {
   const [mockExamHistory, setMockExamHistory] = useState([]);
   const [expandedAttemptId, setExpandedAttemptId] = useState(null);
   const [badges, setBadges] = useState([]);
+  const [weeklyRewards, setWeeklyRewards] = useState({ latest: null, recent: [] });
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -32,6 +33,7 @@ export default function Profile() {
       setStats(res.data.stats);
       setMockExam(res.data.mock_exam || null);
       setBadges(res.data.badges);
+      setWeeklyRewards(res.data.weekly_rewards || { latest: null, recent: [] });
       if (res.data.user) {
         updateUserStats(res.data.user);
         setEmail(res.data.user.email);
@@ -100,7 +102,43 @@ export default function Profile() {
     });
   };
 
+  const formatRewardTier = (tier) => {
+    if (!tier) return 'Reward';
+
+    return tier
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase())
+      .replace(' Chest', '');
+  };
+
+  const getRewardTierClass = (tier) => {
+    const normalizedTier = (tier || '').toLowerCase();
+
+    if (normalizedTier.includes('gold')) return 'text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-700/50 bg-yellow-50 dark:bg-yellow-900/30';
+    if (normalizedTier.includes('silver')) return 'text-slate-600 dark:text-slate-200 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/40';
+    if (normalizedTier.includes('bronze')) return 'text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-700/50 bg-orange-50 dark:bg-orange-900/30';
+
+    return 'text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/30';
+  };
+
+  const formatInventoryRewards = (inventoryRewards) => {
+    const labels = {
+      inventory_energy_plus_one: 'Energy +1',
+      inventory_energy_refills: 'Energy Refill',
+      inventory_double_xp: 'Double XP',
+      inventory_streak_freezes: 'Streak Freeze',
+    };
+
+    if (!inventoryRewards || typeof inventoryRewards !== 'object') return [];
+
+    return Object.entries(inventoryRewards)
+      .filter(([, amount]) => Number(amount) > 0)
+      .map(([key, amount]) => `+${amount} ${labels[key] || key.replace(/_/g, ' ')}`);
+  };
+
   const visibleMockExamHistory = mockExamHistory.slice(0, 3);
+  const latestWeeklyReward = weeklyRewards?.latest || null;
+  const recentWeeklyRewards = weeklyRewards?.recent || [];
   const mockAttemptCount = mockExam?.attempt_count || 0;
   const isPremium = !!user?.is_premium;
   const hasCategory = !!userClass;
@@ -398,30 +436,144 @@ export default function Profile() {
               )}
 
               {activeTab === 'Achievements' && (
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 place-items-center">
-                    {badges.map((badge, idx) => {
-                      const Icon = badgeIcons[idx];
-                      const colorObj = badgeColors[idx];
-                      return (
-                        <div key={badge.id} className="flex flex-col items-center text-center gap-3">
-                          <div
-                            title={badge.name}
-                            className={`relative w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center border-2 ${badge.earned ? colorObj.bg : 'border-slate-800 grayscale opacity-30'} ${badge.earned ? 'shadow-[0_0_20px_rgba(251,191,36,0.2)]' : ''} transition-all duration-300`}
-                          >
-                            <Icon size={32} className={`${badge.earned ? colorObj.color : 'text-slate-600'}`} />
+                <div className="flex flex-col gap-6">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-5 flex items-center gap-2">
+                      <Award size={20} className="text-yellow-500" />
+                      Badges
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 place-items-center">
+                      {badges.map((badge, idx) => {
+                        const Icon = badgeIcons[idx];
+                        const colorObj = badgeColors[idx];
+                        return (
+                          <div key={badge.id} className="flex flex-col items-center text-center gap-3">
+                            <div
+                              title={badge.name}
+                              className={`relative w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center border-2 ${badge.earned ? colorObj.bg : 'border-slate-800 grayscale opacity-30'} ${badge.earned ? 'shadow-[0_0_20px_rgba(251,191,36,0.2)]' : ''} transition-all duration-300`}
+                            >
+                              <Icon size={32} className={`${badge.earned ? colorObj.color : 'text-slate-600'}`} />
+                            </div>
+                            <div>
+                              <p className={`font-black text-sm ${badge.earned ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
+                                {badge.name}
+                              </p>
+                              <span className={`text-[10px] font-bold uppercase tracking-widest ${badge.earned ? 'text-yellow-600 dark:text-yellow-500' : 'text-slate-400 dark:text-slate-600'}`}>
+                                {badge.earned ? 'Unlocked' : 'Locked'}
+                              </span>
+                            </div>
                           </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Star size={20} className="text-yellow-500" />
+                      Latest Weekly Reward
+                    </h3>
+
+                    {latestWeeklyReward ? (
+                      <div className={`rounded-xl border p-4 ${getRewardTierClass(latestWeeklyReward.reward_tier)}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div>
-                            <p className={`font-black text-sm ${badge.earned ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
-                              {badge.name}
+                            <p className="text-xs font-black uppercase tracking-widest opacity-80">
+                              {formatRewardTier(latestWeeklyReward.reward_tier)} Chest
                             </p>
-                            <span className={`text-[10px] font-bold uppercase tracking-widest ${badge.earned ? 'text-yellow-600 dark:text-yellow-500' : 'text-slate-400 dark:text-slate-600'}`}>
-                              {badge.earned ? 'Unlocked' : 'Locked'}
-                            </span>
+                            <p className="text-2xl font-black mt-1">
+                              Top {latestWeeklyReward.placement} in {latestWeeklyReward.rank_name}
+                            </p>
+                            <p className="text-sm font-bold mt-1 opacity-80">
+                              Week of {formatAttemptDate(latestWeeklyReward.week_start_date)}
+                            </p>
+                          </div>
+                          <div className="sm:text-right">
+                            <p className="text-xl font-black">+{latestWeeklyReward.points_awarded} Points</p>
+                            {latestWeeklyReward.badge_awarded && (
+                              <p className="text-xs font-black uppercase tracking-widest mt-2">
+                                {latestWeeklyReward.badge_awarded}
+                              </p>
+                            )}
                           </div>
                         </div>
-                      )
-                    })}
+
+                        {formatInventoryRewards(latestWeeklyReward.inventory_rewards).length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-4">
+                            {formatInventoryRewards(latestWeeklyReward.inventory_rewards).map((reward) => (
+                              <span key={reward} className="rounded-full bg-white/60 dark:bg-slate-900/40 px-3 py-1 text-xs font-black uppercase tracking-widest">
+                                {reward}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          Weekly rewards appear here after Sunday's league reset.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Clock size={20} className="text-blue-500" />
+                      Recent Weekly Rewards
+                    </h3>
+
+                    {recentWeeklyRewards.length === 0 ? (
+                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          Weekly rewards appear here after Sunday's league reset.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {recentWeeklyRewards.map((reward, idx) => {
+                          const inventoryLabels = formatInventoryRewards(reward.inventory_rewards);
+
+                          return (
+                            <div key={`${reward.week_start_date}-${reward.reward_tier}-${idx}`} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${getRewardTierClass(reward.reward_tier)}`}>
+                                      {formatRewardTier(reward.reward_tier)}
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                                      Week of {formatAttemptDate(reward.week_start_date)}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-900 dark:text-white font-black">
+                                    Top {reward.placement} in {reward.rank_name}
+                                  </p>
+                                  {reward.badge_awarded && (
+                                    <p className="text-xs font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-400 mt-1">
+                                      {reward.badge_awarded}
+                                    </p>
+                                  )}
+                                </div>
+                                <p className="text-emerald-600 dark:text-emerald-400 font-black sm:text-right">
+                                  +{reward.points_awarded} Points
+                                </p>
+                              </div>
+
+                              {inventoryLabels.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {inventoryLabels.map((label) => (
+                                    <span key={label} className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
