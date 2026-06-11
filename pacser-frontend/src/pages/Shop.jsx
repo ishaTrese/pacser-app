@@ -4,20 +4,22 @@ import Footer from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
 import CategoryBadge from '../components/ui/CategoryBadge';
 import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Shop() {
   const [activeTab, setActiveTab] = useState('Perks');
   const [modalMessage, setModalMessage] = useState(null);
   const { user, updateUserStats } = useAuth();
+  const navigate = useNavigate();
   const availablePoints = user?.points || 0;
 
 
 
   const perks = [
-    { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', cost: 450 },
-    { id: 'streak_freeze', title: 'Streak Freeze', detail: 'Protect your streak', cost: 150 },
-    { id: 'energy_refill', title: 'Energy Refill', detail: 'Full energy restore', cost: 180 },
-    { id: 'energy_plus_one', title: 'Energy +1', detail: 'One energy restore', cost: 20 },
+    { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', value: 'Best before a study session.', cost: 450 },
+    { id: 'streak_freeze', title: 'Streak Freeze', detail: 'Protect your streak', value: 'Protects one eligible missed study day.', cost: 150 },
+    { id: 'energy_refill', title: 'Energy Refill', detail: 'Full energy restore', value: 'Restores energy up to your cap.', cost: 180 },
+    { id: 'energy_plus_one', title: 'Energy +1', detail: 'One energy restore', value: 'Restores one energy.', cost: 20 },
   ];
 
   const inventoryKeyFor = (itemId) => (
@@ -124,13 +126,30 @@ export default function Shop() {
               <CategoryBadge />
             </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              Redeem points for books, perks, and more!
+              Spend points on study perks that help you keep momentum.
             </p>
           </div>
           <div className="bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700/50 shadow-sm rounded-xl px-5 py-3 flex items-center gap-4">
             <span className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">Available Points</span>
             <span className="text-blue-600 dark:text-blue-400 font-black text-2xl">{availablePoints}</span>
           </div>
+        </div>
+
+        <div className="mb-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">How points work</p>
+            <h2 className="text-slate-900 dark:text-white font-black text-lg tracking-tight">Earn points, then turn them into study perks.</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1 max-w-3xl">
+              Earn points from quizzes, perfect scores, daily missions, and weekly league rewards. Spend points on study perks in the Shop.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 px-5 rounded-xl transition-all shadow-md uppercase tracking-widest shrink-0"
+          >
+            Earn Points
+          </button>
         </div>
 
         {/* Content Area */}
@@ -174,7 +193,8 @@ export default function Shop() {
                         </div>
                       )}
                       <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">{perk.title}</h3>
-                      <p className="text-slate-400 dark:text-slate-500 text-sm mb-4">{perk.detail}</p>
+                      <p className="text-slate-400 dark:text-slate-500 text-sm mb-1">{perk.detail}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-sm font-bold mb-4">{perk.value}</p>
 
                       <div className="flex flex-wrap gap-2 mb-5">
                         <span className="rounded-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">
@@ -187,7 +207,7 @@ export default function Shop() {
                         )}
                         {!canAfford && (
                           <span className="rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-700/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">
-                            Need {pointsNeeded} pts
+                            Need {pointsNeeded} more points
                           </span>
                         )}
                       </div>
@@ -219,6 +239,11 @@ export default function Shop() {
                         >
                           {activationState.canActivate ? 'Activate' : activationState.reason}
                         </button>
+                        {!canAfford && (
+                          <p className="text-xs text-amber-600 dark:text-amber-300 font-bold text-center">
+                            Need {pointsNeeded} more points
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
@@ -230,21 +255,13 @@ export default function Shop() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start shadow-xl">
                   <div className="w-40 h-56 bg-slate-800 dark:bg-slate-900 rounded-lg flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
-                    <span className="text-slate-500 font-bold text-sm">Book Cover Placeholder</span>
+                    <span className="text-slate-500 font-bold text-sm text-center px-4">Reviewer Book</span>
                   </div>
                   <div className="flex flex-col flex-1 h-full">
-                    <h3 className="text-slate-900 dark:text-white font-bold text-2xl mb-2">CSE Reviewer Masterclass</h3>
+                    <h3 className="text-slate-900 dark:text-white font-bold text-2xl mb-2">Reviewer Book Details</h3>
                     <p className="text-slate-400 dark:text-slate-500 text-sm mb-6 leading-relaxed">
-                      The ultimate guide to passing the Civil Service Exam. Packed with comprehensive lessons, practice tests, and proven strategies to help you succeed.
+                      Reviewer book details will be available here.
                     </p>
-                    <a 
-                      href="#" 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-3 rounded-lg transition-colors w-full sm:w-auto self-start shadow-lg"
-                    >
-                      Buy on Shopee
-                    </a>
                   </div>
                 </div>
               </div>
