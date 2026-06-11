@@ -17,8 +17,68 @@ export default function Shop() {
     { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', cost: 450 },
     { id: 'streak_freeze', title: 'Streak Freeze', detail: 'Protect your streak', cost: 150 },
     { id: 'energy_refill', title: 'Energy Refill', detail: 'Full energy restore', cost: 180 },
-    { id: 'energy_plus_one', title: 'Energy', detail: 'One energy restore', cost: 20 },
+    { id: 'energy_plus_one', title: 'Energy +1', detail: 'One energy restore', cost: 20 },
   ];
+
+  const inventoryKeyFor = (itemId) => (
+    itemId === 'double_xp' ? 'inventory_double_xp' :
+    itemId === 'streak_freeze' ? 'inventory_streak_freezes' :
+    itemId === 'energy_refill' ? 'inventory_energy_refills' :
+    'inventory_energy_plus_one'
+  );
+
+  const isDoubleXpActive = () => {
+    if (!user?.double_xp_until) return false;
+
+    const end = new Date(user.double_xp_until + (!user.double_xp_until.endsWith('Z') ? 'Z' : ''));
+    return end > new Date();
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return null;
+
+    return new Date(dateString + (!dateString.endsWith('Z') ? 'Z' : '')).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const getActivationState = (itemId, ownedCount) => {
+    const energyCap = Math.min(user?.max_energy || 20, 20);
+    const isEnergyFull = (user?.energy || 0) >= energyCap;
+
+    if (ownedCount <= 0) {
+      return { canActivate: false, reason: 'Not owned', activeLabel: null };
+    }
+
+    if (itemId === 'double_xp' && isDoubleXpActive()) {
+      return {
+        canActivate: false,
+        reason: 'Already active',
+        activeLabel: `Active until ${formatDateTime(user.double_xp_until)}`
+      };
+    }
+
+    if (itemId === 'streak_freeze' && user?.streak_freeze_active) {
+      return {
+        canActivate: false,
+        reason: 'Already active',
+        activeLabel: 'Active'
+      };
+    }
+
+    if ((itemId === 'energy_refill' || itemId === 'energy_plus_one') && isEnergyFull) {
+      return {
+        canActivate: false,
+        reason: 'Energy full',
+        activeLabel: `${user?.energy || 0} / ${energyCap} energy`
+      };
+    }
+
+    return { canActivate: true, reason: null, activeLabel: null };
+  };
 
   const handlePurchase = async (itemId) => {
     try {
@@ -26,6 +86,7 @@ export default function Shop() {
       if (res.data.user) {
         updateUserStats(res.data.user);
       }
+      setModalMessage(res.data.message || 'Purchase successful.');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to purchase item');
     }
@@ -37,12 +98,12 @@ export default function Shop() {
       if (res.data.user) {
         updateUserStats(res.data.user);
         if (itemId === 'energy_refill' || itemId === 'energy_plus_one') {
-          setModalMessage(`Perk Activated! Your energy is now ${res.data.user.energy} / 20.`);
+          setModalMessage(`${res.data.message} Your energy is now ${res.data.user.energy} / ${Math.min(res.data.user.max_energy || 20, 20)}.`);
         } else {
-          setModalMessage('Perk Activated!');
+          setModalMessage(res.data.message || 'Perk activated.');
         }
       } else {
-        setModalMessage('Perk Activated!');
+        setModalMessage(res.data.message || 'Perk activated.');
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to activate item');
@@ -100,15 +161,10 @@ export default function Shop() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {perks.map((perk, idx) => {
                   const canAfford = availablePoints >= perk.cost;
-                  
-                  // Map perk ID to inventory column name in user object
-                  const invKey = 
-                    perk.id === 'double_xp' ? 'inventory_double_xp' :
-                    perk.id === 'streak_freeze' ? 'inventory_streak_freezes' :
-                    perk.id === 'energy_refill' ? 'inventory_energy_refills' :
-                    'inventory_energy_plus_one';
-                  
+                  const pointsNeeded = Math.max(0, perk.cost - availablePoints);
+                  const invKey = inventoryKeyFor(perk.id);
                   const ownedCount = user?.[invKey] || 0;
+                  const activationState = getActivationState(perk.id, ownedCount);
 
                   return (
                     <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 flex flex-col shadow-lg transition-transform hover:-translate-y-1 relative">
@@ -118,7 +174,23 @@ export default function Shop() {
                         </div>
                       )}
                       <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">{perk.title}</h3>
-                      <p className="text-slate-400 dark:text-slate-500 text-sm mb-6">{perk.detail}</p>
+                      <p className="text-slate-400 dark:text-slate-500 text-sm mb-4">{perk.detail}</p>
+
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        <span className="rounded-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">
+                          Owned {ownedCount}
+                        </span>
+                        {activationState.activeLabel && (
+                          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-700/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700 dark:text-blue-300">
+                            {activationState.activeLabel}
+                          </span>
+                        )}
+                        {!canAfford && (
+                          <span className="rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-700/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">
+                            Need {pointsNeeded} pts
+                          </span>
+                        )}
+                      </div>
                       
                       <div className="mt-auto flex flex-col gap-3">
                         <div className="flex justify-between items-center">
@@ -132,20 +204,20 @@ export default function Shop() {
                             }`}
                             disabled={!canAfford}
                           >
-                            Buy
+                            {canAfford ? 'Buy' : 'Not enough'}
                           </button>
                         </div>
                         
                         <button 
                           onClick={() => handleActivate(perk.id)}
-                          disabled={ownedCount <= 0}
+                          disabled={!activationState.canActivate}
                           className={`w-full py-2.5 rounded-lg font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
-                            ownedCount > 0
+                            activationState.canActivate
                               ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md'
                               : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                           }`}
                         >
-                          Activate
+                          {activationState.canActivate ? 'Activate' : activationState.reason}
                         </button>
                       </div>
                     </div>
