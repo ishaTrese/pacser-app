@@ -17,6 +17,7 @@ export default function Profile() {
   const [badges, setBadges] = useState([]);
   const [weeklyRewards, setWeeklyRewards] = useState({ latest: null, recent: [] });
   const [inventory, setInventory] = useState(null);
+  const [practiceAnalytics, setPracticeAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -36,6 +37,7 @@ export default function Profile() {
       setBadges(res.data.badges);
       setWeeklyRewards(res.data.weekly_rewards || { latest: null, recent: [] });
       setInventory(res.data.inventory || null);
+      setPracticeAnalytics(res.data.practice_analytics || null);
       if (res.data.user) {
         updateUserStats(res.data.user);
         setEmail(res.data.user.email);
@@ -149,10 +151,33 @@ export default function Profile() {
     });
   };
 
+  const formatPracticeResult = (result) => {
+    if (!result) return null;
+
+    return `${result.percentage}% (${result.score}/${result.total})`;
+  };
+
+  const formatDifficulty = (difficulty) => {
+    if (!difficulty) return 'Average';
+
+    return difficulty
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  };
+
   const visibleMockExamHistory = mockExamHistory.slice(0, 3);
   const latestWeeklyReward = weeklyRewards?.latest || null;
   const recentWeeklyRewards = weeklyRewards?.recent || [];
   const inventorySummary = inventory || {};
+  const practiceSummary = practiceAnalytics || {};
+  const hasPracticeAttempts = (practiceSummary.total_attempts || 0) > 0;
+  const practiceStats = [
+    { label: 'Practice Attempts', value: practiceSummary.total_attempts || 0 },
+    { label: 'Sets Completed', value: practiceSummary.unique_quiz_sets_completed || 0 },
+    { label: 'Average Accuracy', value: `${practiceSummary.average_accuracy || 0}%` },
+    { label: 'Perfect Quizzes', value: practiceSummary.perfect_quiz_count || 0 },
+    { label: 'Timed Challenges', value: practiceSummary.difficult_quiz_count || 0 },
+  ];
   const inventoryItems = [
     { label: 'Energy +1', count: inventorySummary.inventory_energy_plus_one || 0 },
     { label: 'Energy Refill', count: inventorySummary.inventory_energy_refills || 0 },
@@ -297,6 +322,78 @@ export default function Profile() {
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                       Daily missions are now handled from the Dashboard so this profile can focus on your progress history.
                     </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Target size={20} className="text-green-500" />
+                      Practice Progress
+                    </h3>
+
+                    {!hasPracticeAttempts ? (
+                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          No practice attempts yet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                          {practiceStats.map((item) => (
+                            <div key={item.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-100 dark:border-slate-700/50">
+                              <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
+                                {item.label}
+                              </p>
+                              <p className="text-slate-900 dark:text-white font-black text-lg">
+                                {item.value}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">
+                              Best Practice Result
+                            </p>
+                            {practiceSummary.best_result ? (
+                              <>
+                                <p className="text-slate-900 dark:text-white font-black text-lg">
+                                  {formatPracticeResult(practiceSummary.best_result)}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">
+                                  {practiceSummary.best_result.quiz_set_name} • {formatDifficulty(practiceSummary.best_result.difficulty)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No result yet.</p>
+                            )}
+                          </div>
+
+                          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">
+                              Latest Practice Result
+                            </p>
+                            {practiceSummary.latest_result ? (
+                              <>
+                                <p className="text-slate-900 dark:text-white font-black text-lg">
+                                  {formatPracticeResult(practiceSummary.latest_result)}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">
+                                  {practiceSummary.latest_result.quiz_set_name} • {formatDifficulty(practiceSummary.latest_result.difficulty)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No result yet.</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                          Timed Challenges count difficult quiz attempts, not subject mastery.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Rank Perks Section */}
