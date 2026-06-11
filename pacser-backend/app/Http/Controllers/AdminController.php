@@ -231,6 +231,148 @@ class AdminController extends Controller
         return response()->json(['message' => 'Quiz set deleted successfully']);
     }
 
+    public function getAccessCodes(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'nullable|in:available,used,disabled',
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $query = \App\Models\AccessCode::with('usedBy')
+            ->when($validated['status'] ?? null, function ($query, $status) {
+                if ($status === 'available') {
+                    $query->where('is_used', false)->whereNull('disabled_at');
+                } elseif ($status === 'used') {
+                    $query->where('is_used', true);
+                } elseif ($status === 'disabled') {
+                    $query->whereNotNull('disabled_at');
+                }
+            })
+            ->when($validated['search'] ?? null, function ($query, $search) {
+                $query->where('code', 'like', "%{$search}%");
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn ($accessCode) => $this->formatAccessCode($accessCode));
+
+        return response()->json([
+            'access_codes' => $query,
+        ]);
+    }
+
+    public function createAccessCode(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'code' => 'required|string|max:255|unique:access_codes,code',
+        ]);
+
+        $code = strtoupper(trim($validated['code']));
+
+        if ($code === '') {
+            throw ValidationException::withMessages([
+                'code' => ['Access code cannot be blank.'],
+            ]);
+        }
+
+        if (\App\Models\AccessCode::where('code', $code)->exists()) {
+            throw ValidationException::withMessages([
+                'code' => ['This access code already exists.'],
+            ]);
+        }
+
+        $accessCode = \App\Models\AccessCode::create([
+            'code' => $code,
+            'is_used' => false,
+            'disabled_at' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Access code created successfully.',
+            'access_code' => $this->formatAccessCode($accessCode->load('usedBy')),
+        ], 201);
+    }
+
+    public function updateAccessCode(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $accessCode = \App\Models\AccessCode::findOrFail($id);
+
+        $validated = $request->validate([
+            'code' => 'sometimes|required|string|max:255',
+            'disabled' => 'sometimes|boolean',
+        ]);
+
+        if (array_key_exists('code', $validated)) {
+            if ($accessCode->is_used) {
+                return response()->json([
+                    'message' => 'Used access codes cannot be edited.',
+                ], 422);
+            }
+
+            $code = strtoupper(trim($validated['code']));
+
+            if ($code === '') {
+                throw ValidationException::withMessages([
+                    'code' => ['Access code cannot be blank.'],
+                ]);
+            }
+
+            $exists = \App\Models\AccessCode::where('code', $code)
+                ->where('id', '!=', $accessCode->id)
+                ->exists();
+
+            if ($exists) {
+                throw ValidationException::withMessages([
+                    'code' => ['This access code already exists.'],
+                ]);
+            }
+
+            $accessCode->code = $code;
+        }
+
+        if (array_key_exists('disabled', $validated)) {
+            $accessCode->disabled_at = $validated['disabled'] ? now() : null;
+        }
+
+        $accessCode->save();
+
+        return response()->json([
+            'message' => 'Access code updated successfully.',
+            'access_code' => $this->formatAccessCode($accessCode->load('usedBy')),
+        ]);
+    }
+
+    public function deleteAccessCode(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $accessCode = \App\Models\AccessCode::findOrFail($id);
+
+        if ($accessCode->is_used) {
+            return response()->json([
+                'message' => 'Used access codes cannot be deleted.',
+            ], 422);
+        }
+
+        $accessCode->delete();
+
+        return response()->json(['message' => 'Access code deleted successfully.']);
+    }
+
     public function createQuestion(Request $request)
     {
         if ($request->user()->role !== 'admin') {
@@ -857,6 +999,25 @@ class AdminController extends Controller
             'subject' => $quizSet->subject,
             'questions_count' => $quizSet->questions_count ?? $quizSet->questions()->count(),
             'is_premium' => (bool) $quizSet->is_premium,
+        ];
+    }
+
+    private function formatAccessCode(\App\Models\AccessCode $accessCode): array
+    {
+        return [
+            'id' => $accessCode->id,
+            'code' => $accessCode->code,
+            'is_used' => (bool) $accessCode->is_used,
+            'used_by_user_id' => $accessCode->used_by,
+            'used_by_name' => $accessCode->usedBy
+                ? trim($accessCode->usedBy->first_name . ' ' . $accessCode->usedBy->last_name)
+                : null,
+            'used_at' => $accessCode->used_at,
+            'created_at' => $accessCode->created_at,
+            'disabled_at' => $accessCode->disabled_at,
+            'status' => $accessCode->disabled_at
+                ? 'disabled'
+                : ((bool) $accessCode->is_used ? 'used' : 'available'),
         ];
     }
 }

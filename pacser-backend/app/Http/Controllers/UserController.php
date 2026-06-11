@@ -123,6 +123,10 @@ class UserController extends Controller
             return response()->json(['message' => 'Invalid access code.'], 400);
         }
 
+        if ($accessCode->disabled_at) {
+            return response()->json(['message' => 'This access code is disabled.'], 400);
+        }
+
         if ($accessCode->is_used) {
             return response()->json(['message' => 'This access code has already been redeemed.'], 400);
         }

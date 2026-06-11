@@ -48,6 +48,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/quiz-sets', [\App\Http\Controllers\AdminController::class, 'createQuizSet']);
     Route::put('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'updateQuizSet']);
     Route::delete('/admin/quiz-sets/{id}', [\App\Http\Controllers\AdminController::class, 'deleteQuizSet']);
+    Route::get('/admin/access-codes', [\App\Http\Controllers\AdminController::class, 'getAccessCodes']);
+    Route::post('/admin/access-codes', [\App\Http\Controllers\AdminController::class, 'createAccessCode']);
+    Route::put('/admin/access-codes/{id}', [\App\Http\Controllers\AdminController::class, 'updateAccessCode']);
+    Route::delete('/admin/access-codes/{id}', [\App\Http\Controllers\AdminController::class, 'deleteAccessCode']);
     Route::get('/admin/questions', [\App\Http\Controllers\AdminController::class, 'getQuestions']);
     Route::get('/admin/questions/export', [\App\Http\Controllers\AdminController::class, 'exportQuestions']);
     Route::post('/admin/questions/import-preview', [\App\Http\Controllers\AdminController::class, 'importQuestionsPreview']);

@@ -54,6 +54,13 @@ export default function AdminDashboard() {
   const [exportLoading, setExportLoading] = useState(false);
   const [importMessage, setImportMessage] = useState('');
   const [importErrors, setImportErrors] = useState([]);
+  const [accessCodes, setAccessCodes] = useState([]);
+  const [accessCodeLoading, setAccessCodeLoading] = useState(false);
+  const [accessCodeSaving, setAccessCodeSaving] = useState(false);
+  const [accessCodeForm, setAccessCodeForm] = useState('');
+  const [accessCodeMessage, setAccessCodeMessage] = useState('');
+  const [accessCodeErrors, setAccessCodeErrors] = useState([]);
+  const [accessCodeFilters, setAccessCodeFilters] = useState({ status: '', search: '' });
 
   const visibleQuizSets = useMemo(() => {
     if (!filters.subject_id) return quizSets;
@@ -75,6 +82,28 @@ export default function AdminDashboard() {
     setQuizSets(quizSetsRes.data.quiz_sets || []);
     setSubjects(quizSetsRes.data.subjects || []);
   }, []);
+
+  const fetchAccessCodes = useCallback(async () => {
+    if (!user || user.role !== 'admin') return;
+
+    setAccessCodeLoading(true);
+    setAccessCodeErrors([]);
+
+    try {
+      const params = new URLSearchParams();
+      if (accessCodeFilters.status) params.set('status', accessCodeFilters.status);
+      if (accessCodeFilters.search) params.set('search', accessCodeFilters.search);
+
+      const query = params.toString();
+      const res = await api.get(`/admin/access-codes${query ? `?${query}` : ''}`);
+      setAccessCodes(res.data.access_codes || []);
+    } catch (err) {
+      console.error('Access code fetch error', err);
+      setAccessCodeErrors(formatBackendErrors(err, 'Failed to load access codes.'));
+    } finally {
+      setAccessCodeLoading(false);
+    }
+  }, [accessCodeFilters, user]);
 
   const fetchQuestions = useCallback(async (page = filters.page) => {
     if (!user || user.role !== 'admin') return;
@@ -136,6 +165,12 @@ export default function AdminDashboard() {
 
     fetchQuestions(filters.page);
   }, [fetchQuestions, filters.page, user]);
+
+  useEffect(() => {
+    if (activeTab === 'access_codes') {
+      fetchAccessCodes();
+    }
+  }, [activeTab, fetchAccessCodes]);
 
   const updateFilter = (key, value) => {
     setFilters((current) => {
@@ -384,6 +419,71 @@ export default function AdminDashboard() {
     }
   };
 
+  const createAccessCode = async () => {
+    if (!accessCodeForm.trim()) {
+      setAccessCodeErrors(['Access code cannot be blank.']);
+      return;
+    }
+
+    setAccessCodeSaving(true);
+    setAccessCodeErrors([]);
+    setAccessCodeMessage('');
+
+    try {
+      const res = await api.post('/admin/access-codes', { code: accessCodeForm });
+      setAccessCodeMessage(res.data.message || 'Access code created.');
+      setAccessCodeForm('');
+      await fetchAccessCodes();
+    } catch (err) {
+      console.error('Failed to create access code', err);
+      setAccessCodeErrors(formatBackendErrors(err, 'Failed to create access code.'));
+    } finally {
+      setAccessCodeSaving(false);
+    }
+  };
+
+  const toggleAccessCode = async (accessCode) => {
+    setAccessCodeErrors([]);
+    setAccessCodeMessage('');
+
+    try {
+      const shouldDisable = !accessCode.disabled_at;
+      const res = await api.put(`/admin/access-codes/${accessCode.id}`, { disabled: shouldDisable });
+      setAccessCodeMessage(res.data.message || 'Access code updated.');
+      await fetchAccessCodes();
+    } catch (err) {
+      console.error('Failed to update access code', err);
+      setAccessCodeErrors(formatBackendErrors(err, 'Failed to update access code.'));
+    }
+  };
+
+  const deleteAccessCode = async (accessCode) => {
+    if (accessCode.is_used) return;
+
+    if (window.confirm(`Delete access code "${accessCode.code}"?`)) {
+      try {
+        const res = await api.delete(`/admin/access-codes/${accessCode.id}`);
+        setAccessCodeMessage(res.data.message || 'Access code deleted.');
+        await fetchAccessCodes();
+      } catch (err) {
+        console.error('Failed to delete access code', err);
+        setAccessCodeErrors(formatBackendErrors(err, 'Failed to delete access code.'));
+      }
+    }
+  };
+
+  const accessCodeStatus = (accessCode) => {
+    if (accessCode.disabled_at) return 'Disabled';
+    if (accessCode.is_used) return 'Used';
+    return 'Available';
+  };
+
+  const accessCodeStatusClass = (accessCode) => {
+    if (accessCode.disabled_at) return 'bg-slate-200 text-slate-700';
+    if (accessCode.is_used) return 'bg-purple-100 text-purple-700';
+    return 'bg-green-100 text-green-700';
+  };
+
   if (loading) return <div className="min-h-screen bg-slate-50 p-10">Loading Admin...</div>;
 
   if (user?.role !== 'admin') {
@@ -457,6 +557,16 @@ export default function AdminDashboard() {
             }`}
           >
             Import / Export
+          </button>
+          <button
+            onClick={() => setActiveTab('access_codes')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+              activeTab === 'access_codes'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
+            }`}
+          >
+            Access Codes
           </button>
         </div>
 
@@ -977,6 +1087,151 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'access_codes' && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-fit">
+              <div className="p-6 border-b border-slate-200 bg-slate-50">
+                <h2 className="text-xl font-bold text-slate-900">Create Access Code</h2>
+                <p className="text-sm text-slate-500 mt-1">Access codes unlock Premium for one user.</p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {accessCodeMessage && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-bold text-green-700">
+                    {accessCodeMessage}
+                  </div>
+                )}
+
+                {accessCodeErrors.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <p className="font-bold mb-1">Please fix the following:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {accessCodeErrors.map((errorItem, index) => (
+                        <li key={`${errorItem}-${index}`}>{errorItem}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Code</label>
+                  <input
+                    value={accessCodeForm}
+                    onChange={(e) => setAccessCodeForm(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+                    placeholder="PACSER-PREMIUM-001"
+                  />
+                </div>
+
+                <button
+                  onClick={createAccessCode}
+                  disabled={accessCodeSaving}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Plus size={16} /> {accessCodeSaving ? 'Creating...' : 'Create Code'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-slate-200 bg-slate-50">
+                <h2 className="text-xl font-bold text-slate-900">Access Codes</h2>
+                <p className="text-sm text-slate-500">Create, disable, enable, and delete unused Premium codes.</p>
+              </div>
+
+              <div className="p-4 border-b border-slate-200 grid grid-cols-1 md:grid-cols-[180px_1fr_auto] gap-3">
+                <select
+                  value={accessCodeFilters.status}
+                  onChange={(e) => setAccessCodeFilters((current) => ({ ...current, status: e.target.value }))}
+                  className="border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+                >
+                  <option value="">All statuses</option>
+                  <option value="available">Available</option>
+                  <option value="used">Used</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+                <input
+                  type="search"
+                  value={accessCodeFilters.search}
+                  onChange={(e) => setAccessCodeFilters((current) => ({ ...current, search: e.target.value }))}
+                  placeholder="Search code"
+                  className="border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+                />
+                <button
+                  onClick={() => setAccessCodeFilters({ status: '', search: '' })}
+                  className="border border-slate-300 hover:border-slate-400 text-slate-700 font-bold rounded-lg p-2.5 text-sm transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
+                      <th className="p-4">Code</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Used By</th>
+                      <th className="p-4">Used At</th>
+                      <th className="p-4">Created At</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accessCodeLoading ? (
+                      <tr>
+                        <td colSpan="6" className="p-8 text-center text-sm font-bold text-slate-500">
+                          Loading access codes...
+                        </td>
+                      </tr>
+                    ) : accessCodes.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-8 text-center text-sm font-bold text-slate-500">
+                          No access codes found.
+                        </td>
+                      </tr>
+                    ) : accessCodes.map((accessCode) => (
+                      <tr key={accessCode.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="p-4 text-sm font-black text-slate-900">{accessCode.code}</td>
+                        <td className="p-4">
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${accessCodeStatusClass(accessCode)}`}>
+                            {accessCodeStatus(accessCode)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm text-slate-600">
+                          {accessCode.used_by_name || (accessCode.used_by_user_id ? `User #${accessCode.used_by_user_id}` : '-')}
+                        </td>
+                        <td className="p-4 text-sm text-slate-600">
+                          {accessCode.used_at ? new Date(accessCode.used_at).toLocaleString() : '-'}
+                        </td>
+                        <td className="p-4 text-sm text-slate-600">
+                          {accessCode.created_at ? new Date(accessCode.created_at).toLocaleString() : '-'}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => toggleAccessCode(accessCode)}
+                            className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 mr-4"
+                          >
+                            {accessCode.disabled_at ? 'Enable' : 'Disable'}
+                          </button>
+                          <button
+                            onClick={() => deleteAccessCode(accessCode)}
+                            disabled={accessCode.is_used}
+                            title={accessCode.is_used ? 'Used access codes cannot be deleted.' : 'Delete access code'}
+                            className="text-red-500 hover:text-red-700 font-medium inline-flex items-center gap-1 disabled:text-slate-300 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 size={16} /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
