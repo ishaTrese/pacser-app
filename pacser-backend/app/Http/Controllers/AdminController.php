@@ -67,10 +67,56 @@ class AdminController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $questions = \App\Models\Question::with('answers', 'quizSet.subject')->orderBy('id', 'desc')->get();
+        $validated = $request->validate([
+            'subject_id' => 'nullable|integer|exists:subjects,id',
+            'quiz_set_id' => 'nullable|integer|exists:quiz_sets,id',
+            'difficulty' => 'nullable|in:easy,average,difficult',
+            'is_pretest' => 'nullable|in:true,false,1,0',
+            'search' => 'nullable|string|max:255',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        $perPage = min((int) ($validated['per_page'] ?? 20), 50);
+
+        $query = \App\Models\Question::with('answers', 'quizSet.subject')
+            ->when($validated['quiz_set_id'] ?? null, function ($query, $quizSetId) {
+                $query->where('quiz_set_id', $quizSetId);
+            })
+            ->when(array_key_exists('is_pretest', $validated), function ($query) use ($validated) {
+                $query->where('is_pretest', filter_var($validated['is_pretest'], FILTER_VALIDATE_BOOLEAN));
+            })
+            ->when($validated['search'] ?? null, function ($query, $search) {
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('question_text', 'like', "%{$search}%")
+                        ->orWhere('explanation', 'like', "%{$search}%");
+                });
+            })
+            ->when(($validated['subject_id'] ?? null) || ($validated['difficulty'] ?? null), function ($query) use ($validated) {
+                $query->whereHas('quizSet', function ($quizSetQuery) use ($validated) {
+                    if ($validated['subject_id'] ?? null) {
+                        $quizSetQuery->where('subject_id', $validated['subject_id']);
+                    }
+
+                    if ($validated['difficulty'] ?? null) {
+                        $quizSetQuery->where('difficulty', $validated['difficulty']);
+                    }
+                });
+            })
+            ->orderBy('id', 'desc');
+
+        $questions = $query->paginate($perPage);
         
         return response()->json([
-            'questions' => $questions
+            'questions' => $questions->items(),
+            'pagination' => [
+                'current_page' => $questions->currentPage(),
+                'per_page' => $questions->perPage(),
+                'total' => $questions->total(),
+                'last_page' => $questions->lastPage(),
+                'from' => $questions->firstItem(),
+                'to' => $questions->lastItem(),
+            ],
         ]);
     }
 
