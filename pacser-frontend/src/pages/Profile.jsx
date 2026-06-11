@@ -222,6 +222,11 @@ export default function Profile() {
       : mockAttemptCount > 0
         ? 'Retake Mock Exam'
         : 'Take Mock Exam';
+  const premiumBenefits = [
+    'Unlimited mock exam retakes',
+    'Premium Set 3 quiz access',
+    'More advanced practice',
+  ];
 
 
 
@@ -699,16 +704,19 @@ export default function Profile() {
               {activeTab === 'Account' && (
                 <div className="flex flex-col gap-5">
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+                      <div className="min-w-0">
+                        <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest mb-1">
+                          {user?.is_premium ? 'Premium Active' : 'Free Account'}
+                        </p>
                         <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-1 flex items-center gap-2">
                           <Shield size={20} className={user?.is_premium ? 'text-yellow-500' : 'text-blue-500'} />
-                          {user?.is_premium ? 'Premium Active' : 'Free Account'}
+                          {user?.is_premium ? 'Premium benefits unlocked' : 'Unlock Premium with an access code'}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                           {user?.is_premium
-                            ? 'Your Premium access includes unlimited mock exam retakes, Premium Set 3 access, and extra practice value.'
-                            : 'Access codes unlock Premium features for expanded practice and retakes.'}
+                            ? 'Your account already has Premium access.'
+                            : 'Enter an access code from your reviewer/book to activate Premium.'}
                         </p>
                       </div>
                       <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black uppercase tracking-widest ${
@@ -719,6 +727,44 @@ export default function Profile() {
                         {user?.is_premium ? 'Premium' : 'Free'}
                       </span>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                      {premiumBenefits.map((benefit) => (
+                        <div key={benefit} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-100 dark:border-slate-700/50">
+                          <p className="text-xs font-black text-slate-700 dark:text-slate-200">
+                            {benefit}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {user?.is_premium ? (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-100 dark:border-yellow-700/50 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200 font-bold">
+                          Your account already has Premium access.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <h4 className="text-blue-600 dark:text-blue-400 font-bold text-sm mb-1">Redeem Access Code</h4>
+                        <p className="text-slate-400 dark:text-slate-500 text-xs font-medium mb-4">Enter a code from your reviewer/book to unlock Premium features.</p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            placeholder="XXXX-XXXX-XXXX"
+                            value={code}
+                            onChange={e => setCode(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium flex-1 uppercase"
+                          />
+                          <button
+                            onClick={handleRedeemCode}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2 px-6 rounded-lg transition-all shadow-md uppercase tracking-widest shrink-0"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
@@ -789,25 +835,6 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
-                    <h3 className="text-blue-600 dark:text-blue-400 font-bold text-lg mb-1">Redeem Access Code</h3>
-                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium mb-4">Enter a code from your physical book to unlock premium features.</p>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        placeholder="XXXX-XXXX-XXXX"
-                        value={code}
-                        onChange={e => setCode(e.target.value)}
-                        className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium flex-1 uppercase"
-                      />
-                      <button
-                        onClick={handleRedeemCode}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2 px-6 rounded-lg transition-all shadow-md uppercase tracking-widest shrink-0"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
 
