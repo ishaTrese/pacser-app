@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Models\RankHistory;
+use App\Models\WeeklyLeagueReward;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -89,6 +90,96 @@ class EvaluateWeeklyRanks implements ShouldQueue
                     $lockedUser->save();
                 });
             }
+
+            $this->grantWeeklyLeagueRewards($rankId, $weekStart);
         }
+    }
+
+    private function grantWeeklyLeagueRewards(int $rankId, $weekStart): void
+    {
+        $rankHistories = RankHistory::where('old_rank_id', $rankId)
+            ->where('week_start_date', $weekStart)
+            ->orderByDesc('weekly_xp')
+            ->orderBy('user_id')
+            ->get();
+
+        if ($rankHistories->count() < 5) {
+            return;
+        }
+
+        $rankHistories->take(3)->values()->each(function ($history, $index) use ($rankId, $weekStart) {
+            $placement = $index + 1;
+            $reward = $this->weeklyRewardForPlacement($placement);
+
+            if (!$reward) {
+                return;
+            }
+
+            DB::transaction(function () use ($history, $rankId, $weekStart, $placement, $reward) {
+                $lockedUser = User::whereKey($history->user_id)->lockForUpdate()->first();
+
+                if (!$lockedUser) {
+                    return;
+                }
+
+                $existingReward = WeeklyLeagueReward::where('user_id', $lockedUser->id)
+                    ->where('week_start_date', $weekStart)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingReward) {
+                    return;
+                }
+
+                WeeklyLeagueReward::create([
+                    'user_id' => $lockedUser->id,
+                    'rank_id' => $rankId,
+                    'week_start_date' => $weekStart,
+                    'placement' => $placement,
+                    'reward_tier' => $reward['tier'],
+                    'badge_awarded' => $reward['badge'],
+                    'points_awarded' => $reward['points'],
+                    'inventory_rewards' => $reward['inventory'],
+                ]);
+
+                $lockedUser->points += $reward['points'];
+                $lockedUser->inventory_energy_plus_one += $reward['inventory']['inventory_energy_plus_one'] ?? 0;
+                $lockedUser->inventory_energy_refills += $reward['inventory']['inventory_energy_refills'] ?? 0;
+                $lockedUser->inventory_double_xp += $reward['inventory']['inventory_double_xp'] ?? 0;
+                $lockedUser->save();
+            });
+        });
+    }
+
+    private function weeklyRewardForPlacement(int $placement): ?array
+    {
+        return match ($placement) {
+            1 => [
+                'tier' => 'gold',
+                'badge' => 'Weekly Topnotcher',
+                'points' => 100,
+                'inventory' => [
+                    'inventory_energy_refills' => 1,
+                    'inventory_double_xp' => 1,
+                ],
+            ],
+            2 => [
+                'tier' => 'silver',
+                'badge' => null,
+                'points' => 50,
+                'inventory' => [
+                    'inventory_energy_refills' => 1,
+                ],
+            ],
+            3 => [
+                'tier' => 'bronze',
+                'badge' => null,
+                'points' => 25,
+                'inventory' => [
+                    'inventory_energy_plus_one' => 1,
+                ],
+            ],
+            default => null,
+        };
     }
 }
