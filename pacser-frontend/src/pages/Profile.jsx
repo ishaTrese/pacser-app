@@ -16,6 +16,7 @@ export default function Profile() {
   const [expandedAttemptId, setExpandedAttemptId] = useState(null);
   const [badges, setBadges] = useState([]);
   const [weeklyRewards, setWeeklyRewards] = useState({ latest: null, recent: [] });
+  const [inventory, setInventory] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -34,6 +35,7 @@ export default function Profile() {
       setMockExam(res.data.mock_exam || null);
       setBadges(res.data.badges);
       setWeeklyRewards(res.data.weekly_rewards || { latest: null, recent: [] });
+      setInventory(res.data.inventory || null);
       if (res.data.user) {
         updateUserStats(res.data.user);
         setEmail(res.data.user.email);
@@ -136,9 +138,28 @@ export default function Profile() {
       .map(([key, amount]) => `+${amount} ${labels[key] || key.replace(/_/g, ' ')}`);
   };
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return null;
+
+    return new Date(dateString).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
   const visibleMockExamHistory = mockExamHistory.slice(0, 3);
   const latestWeeklyReward = weeklyRewards?.latest || null;
   const recentWeeklyRewards = weeklyRewards?.recent || [];
+  const inventorySummary = inventory || {};
+  const inventoryItems = [
+    { label: 'Energy +1', count: inventorySummary.inventory_energy_plus_one || 0 },
+    { label: 'Energy Refill', count: inventorySummary.inventory_energy_refills || 0 },
+    { label: 'Double XP', count: inventorySummary.inventory_double_xp || 0 },
+    { label: 'Streak Freeze', count: inventorySummary.inventory_streak_freezes || 0 },
+  ];
+  const doubleXpUntil = formatDateTime(inventorySummary.double_xp_until);
   const mockAttemptCount = mockExam?.attempt_count || 0;
   const isPremium = !!user?.is_premium;
   const hasCategory = !!userClass;
@@ -580,6 +601,66 @@ export default function Profile() {
 
               {activeTab === 'Account' && (
                 <div className="flex flex-col gap-5">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-1 flex items-center gap-2">
+                          <Shield size={20} className={user?.is_premium ? 'text-yellow-500' : 'text-blue-500'} />
+                          {user?.is_premium ? 'Premium Active' : 'Free Account'}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          {user?.is_premium
+                            ? 'Your Premium access includes unlimited mock exam retakes, Premium Set 3 access, and extra practice value.'
+                            : 'Access codes unlock Premium features for expanded practice and retakes.'}
+                        </p>
+                      </div>
+                      <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black uppercase tracking-widest ${
+                        user?.is_premium
+                          ? 'border-yellow-200 dark:border-yellow-700/50 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-300'
+                      }`}>
+                        {user?.is_premium ? 'Premium' : 'Free'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4 flex items-center gap-2">
+                      <Zap size={20} className="text-blue-500" />
+                      Inventory & Perks
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {inventoryItems.map((item) => (
+                        <div key={item.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
+                          <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
+                            Owned
+                          </p>
+                          <p className="text-slate-900 dark:text-white font-black text-xl">{item.count}</p>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs font-bold mt-1">{item.label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {inventorySummary.double_xp_active && (
+                        <span className="rounded-full border border-indigo-200 dark:border-indigo-700/50 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300">
+                          Double XP Active{doubleXpUntil ? ` until ${doubleXpUntil}` : ''}
+                        </span>
+                      )}
+                      {inventorySummary.streak_freeze_active && (
+                        <span className="rounded-full border border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-300">
+                          Streak Freeze Active
+                        </span>
+                      )}
+                      {!inventorySummary.double_xp_active && !inventorySummary.streak_freeze_active && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          No active perks right now. Owned perks are available through the app's existing perk flows.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-6 shadow-lg transition-colors">
                     <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4">Account Settings</h3>
                     <div className="flex flex-col gap-4">
