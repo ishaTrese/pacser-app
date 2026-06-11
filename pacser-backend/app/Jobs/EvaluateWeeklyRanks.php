@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Models\RankHistory;
+use App\Models\Notification;
 use App\Models\WeeklyLeagueReward;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -76,7 +77,7 @@ class EvaluateWeeklyRanks implements ShouldQueue
                         $lockedUser->inventory_streak_freezes += 1;
                     }
 
-                    RankHistory::create([
+                    $rankHistory = RankHistory::create([
                         'user_id' => $lockedUser->id,
                         'old_rank_id' => $oldRank,
                         'new_rank_id' => $newRank,
@@ -84,6 +85,14 @@ class EvaluateWeeklyRanks implements ShouldQueue
                         'status' => $status,
                         'week_start_date' => $weekStart
                     ]);
+
+                    if (in_array($status, ['promoted', 'demoted'], true)) {
+                        Notification::create([
+                            'user_id' => $lockedUser->id,
+                            'message' => $this->rankMovementMessage($rankHistory),
+                            'is_read' => false,
+                        ]);
+                    }
 
                     $lockedUser->rank_id = $newRank;
                     $lockedUser->weekly_xp = 0;
@@ -142,6 +151,12 @@ class EvaluateWeeklyRanks implements ShouldQueue
                     'inventory_rewards' => $reward['inventory'],
                 ]);
 
+                Notification::create([
+                    'user_id' => $lockedUser->id,
+                    'message' => $this->weeklyRewardMessage($placement),
+                    'is_read' => false,
+                ]);
+
                 $lockedUser->points += $reward['points'];
                 $lockedUser->inventory_energy_plus_one += $reward['inventory']['inventory_energy_plus_one'] ?? 0;
                 $lockedUser->inventory_energy_refills += $reward['inventory']['inventory_energy_refills'] ?? 0;
@@ -181,5 +196,42 @@ class EvaluateWeeklyRanks implements ShouldQueue
             ],
             default => null,
         };
+    }
+
+    private function weeklyRewardMessage(int $placement): string
+    {
+        return match ($placement) {
+            1 => 'You earned a Gold Chest for placing #1 in your weekly league: +100 points, Energy Refill, Double XP, and Weekly Topnotcher.',
+            2 => 'You earned a Silver Chest for placing #2 in your weekly league: +50 points and Energy Refill.',
+            3 => 'You earned a Bronze Chest for placing #3 in your weekly league: +25 points and Energy +1.',
+            default => 'You earned a weekly league reward.',
+        };
+    }
+
+    private function rankMovementMessage(RankHistory $history): string
+    {
+        $rankNames = $this->rankNames();
+        $oldRank = $rankNames[(int) $history->old_rank_id] ?? 'Applicant';
+        $newRank = $rankNames[(int) $history->new_rank_id] ?? 'Applicant';
+
+        if ($history->status === 'promoted') {
+            return "You were promoted from {$oldRank} to {$newRank} after this week's league result.";
+        }
+
+        return "You were demoted from {$oldRank} to {$newRank} after this week's league result.";
+    }
+
+    private function rankNames(): array
+    {
+        return [
+            1 => 'Applicant',
+            2 => 'Clerk',
+            3 => 'Officer',
+            4 => 'Supervisor',
+            5 => 'Director',
+            6 => 'Secretary',
+            7 => 'Commissioner',
+            8 => 'Civil Service Champion',
+        ];
     }
 }

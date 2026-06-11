@@ -8,6 +8,7 @@ use App\Models\QuizLog;
 use App\Models\QuizAttempt;
 use App\Models\User;
 use App\Models\UserMission;
+use App\Models\Notification;
 use App\Services\StreakService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
@@ -227,6 +228,14 @@ class QuizController extends Controller
             $lockedUser->weekly_xp += $totalXpGained;
             $lockedUser->points += $totalPointsGained;
             $lockedUser->save();
+
+            if ($perfectScoreBonusAwarded) {
+                Notification::create([
+                    'user_id' => $lockedUser->id,
+                    'message' => 'Perfect score! You earned a +25 XP and +50 Points bonus.',
+                    'is_read' => false,
+                ]);
+            }
 
             // Update Daily Missions
             $today = now()->toDateString();
