@@ -6,14 +6,16 @@ import CategoryBadge from '../components/ui/CategoryBadge';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
+const SHOPEE_REVIEWER_URL = 'https://ph.shp.ee/Va4k68jb';
+
 export default function Shop() {
   const [activeTab, setActiveTab] = useState('Perks');
   const [modalMessage, setModalMessage] = useState(null);
   const { user, updateUserStats } = useAuth();
   const navigate = useNavigate();
   const availablePoints = user?.points || 0;
-
-
+  const energyCap = Math.min(user?.max_energy || 20, 20);
+  const currentEnergy = user?.energy ?? 0;
 
   const perks = [
     { id: 'double_xp', title: 'Double XP Boost', detail: '24 hours', value: 'Best before a study session.', cost: 450 },
@@ -129,10 +131,30 @@ export default function Shop() {
               Spend points on study perks that help you keep momentum.
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700/50 shadow-sm rounded-xl px-5 py-3 flex items-center gap-4">
-            <span className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider">Available Points</span>
-            <span className="text-blue-600 dark:text-blue-400 font-black text-2xl">{availablePoints}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
+            <div className="bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700/50 shadow-sm rounded-xl px-5 py-3 flex items-center justify-between gap-4">
+              <span className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">Points</span>
+              <span className="text-blue-600 dark:text-blue-400 font-black text-2xl">{availablePoints}</span>
+            </div>
+            <div className="bg-white dark:bg-slate-800 border border-yellow-200 dark:border-yellow-700/50 shadow-sm rounded-xl px-5 py-3 flex items-center justify-between gap-4">
+              <span className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">Energy</span>
+              <span className="text-yellow-600 dark:text-yellow-300 font-black text-2xl">{currentEnergy}/{energyCap}</span>
+            </div>
           </div>
+        </div>
+
+        <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            ['Energy +1', user?.inventory_energy_plus_one || 0],
+            ['Energy Refill', user?.inventory_energy_refills || 0],
+            ['Double XP', user?.inventory_double_xp || 0],
+            ['Streak Freeze', user?.inventory_streak_freezes || 0],
+          ].map(([label, count]) => (
+            <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
+              <p className="text-lg font-black text-slate-900 dark:text-white">Owned {count}</p>
+            </div>
+          ))}
         </div>
 
         <div className="mb-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -260,8 +282,16 @@ export default function Shop() {
                   <div className="flex flex-col flex-1 h-full">
                     <h3 className="text-slate-900 dark:text-white font-bold text-2xl mb-2">Reviewer Book Details</h3>
                     <p className="text-slate-400 dark:text-slate-500 text-sm mb-6 leading-relaxed">
-                      Reviewer book details will be available here.
+                      Open the official Shopee listing to view the reviewer book details and availability.
                     </p>
+                    <a
+                      href={SHOPEE_REVIEWER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-auto inline-flex w-full sm:w-fit items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+                    >
+                      Open Shopee
+                    </a>
                   </div>
                 </div>
               </div>

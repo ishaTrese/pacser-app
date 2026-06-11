@@ -4,6 +4,8 @@ import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { Gamepad2, BookOpen, PenLine, Trophy, Eye, Target, Shield, Star, MapPin, Phone, Mail, ShoppingCart } from 'lucide-react'
 
+const SHOPEE_REVIEWER_URL = 'https://ph.shp.ee/Va4k68jb'
+
 // ─── COMPANY DETAILS ──────────────────────────────────────────────────────────
 const COMPANY = {
   name: "Community's Holistic and Qualitative Institute Inc. (CHQ Institute)",
@@ -98,7 +100,7 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center justify-center w-full h-full py-8">
           <span className="inline-block mt-8 mb-4 px-4 py-1.5 rounded-full border border-blue-600/50 bg-blue-600/10 text-blue-600 text-xs font-bold tracking-widest uppercase">
-            Gamified CSE Reviewer
+            {user ? 'Welcome Back' : 'Gamified CSE Reviewer'}
           </span>
 
           <h1 className="text-3xl md:text-5xl font-extrabold leading-tight max-w-3xl mb-4">
@@ -108,9 +110,19 @@ export default function Home() {
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base max-w-xl mb-6">
-            Master the CSE with gamified learning, comprehensive study tracks, and
-            practice tests built for Filipino reviewees.
+            {user
+              ? 'Continue your CSE review, keep your streak alive, and pick up where you left off.'
+              : 'Master the CSE with gamified learning, comprehensive study tracks, and practice tests built for Filipino reviewees.'}
           </p>
+
+          {user && (
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="mb-5 inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+            >
+              Continue to Dashboard
+            </button>
+          )}
 
           <p className="text-slate-900 dark:text-slate-50 font-semibold text-base mb-4">Choose Your Category</p>
 
@@ -202,7 +214,7 @@ export default function Home() {
               Boost your chances of passing with our comprehensive, physical review book containing thousands of updated practice questions, test-taking strategies, and complete answer keys.
             </p>
             <a 
-              href="https://shopee.ph/" 
+              href={SHOPEE_REVIEWER_URL}
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-xl font-black text-lg hover:bg-slate-50 transition-all shadow-[0_10px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(0,0,0,0.2)]"
