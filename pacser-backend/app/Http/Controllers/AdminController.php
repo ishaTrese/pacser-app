@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -72,6 +74,19 @@ class AdminController extends Controller
         ]);
     }
 
+    public function getQuestion(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $question = \App\Models\Question::with('answers', 'quizSet.subject')->findOrFail($id);
+
+        return response()->json([
+            'question' => $question
+        ]);
+    }
+
     public function getQuizSets(Request $request)
     {
         if ($request->user()->role !== 'admin') {
@@ -94,30 +109,26 @@ class AdminController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
-            'quiz_set_id' => 'required|exists:quiz_sets,id',
-            'question_text' => 'required|string',
-            'explanation' => 'nullable|string',
-            'is_pretest' => 'boolean',
-            'answers' => 'required|array|min:2',
-            'answers.*.answer_text' => 'required|string',
-            'answers.*.is_correct' => 'required|boolean',
-        ]);
+        $validated = $this->validateQuestionPayload($request);
 
-        $question = \App\Models\Question::create([
-            'quiz_set_id' => $validated['quiz_set_id'],
-            'question_text' => $validated['question_text'],
-            'explanation' => $validated['explanation'],
-            'is_pretest' => $validated['is_pretest'] ?? false,
-        ]);
-
-        foreach ($validated['answers'] as $ans) {
-            \App\Models\Answer::create([
-                'question_id' => $question->id,
-                'answer_text' => $ans['answer_text'],
-                'is_correct' => $ans['is_correct'],
+        $question = DB::transaction(function () use ($validated) {
+            $question = \App\Models\Question::create([
+                'quiz_set_id' => $validated['quiz_set_id'],
+                'question_text' => trim($validated['question_text']),
+                'explanation' => $validated['explanation'] ?? null,
+                'is_pretest' => $validated['is_pretest'] ?? false,
             ]);
-        }
+
+            foreach ($validated['answers'] as $ans) {
+                \App\Models\Answer::create([
+                    'question_id' => $question->id,
+                    'answer_text' => trim($ans['answer_text']),
+                    'is_correct' => $ans['is_correct'],
+                ]);
+            }
+
+            return $question->load('answers', 'quizSet.subject');
+        });
 
         return response()->json(['message' => 'Question created successfully', 'question' => $question]);
     }
@@ -128,36 +139,29 @@ class AdminController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
-            'quiz_set_id' => 'required|exists:quiz_sets,id',
-            'question_text' => 'required|string',
-            'explanation' => 'nullable|string',
-            'is_pretest' => 'boolean',
-            'answers' => 'required|array|min:2',
-            'answers.*.id' => 'nullable|exists:answers,id',
-            'answers.*.answer_text' => 'required|string',
-            'answers.*.is_correct' => 'required|boolean',
-        ]);
+        $validated = $this->validateQuestionPayload($request);
 
-        $question = \App\Models\Question::findOrFail($id);
-        $question->update([
-            'quiz_set_id' => $validated['quiz_set_id'],
-            'question_text' => $validated['question_text'],
-            'explanation' => $validated['explanation'],
-            'is_pretest' => $validated['is_pretest'] ?? false,
-        ]);
-
-        // Replace answers entirely or update them
-        // For simplicity, delete old and recreate to avoid orphans if answers were removed
-        $question->answers()->delete();
-
-        foreach ($validated['answers'] as $ans) {
-            \App\Models\Answer::create([
-                'question_id' => $question->id,
-                'answer_text' => $ans['answer_text'],
-                'is_correct' => $ans['is_correct'],
+        $question = DB::transaction(function () use ($id, $validated) {
+            $question = \App\Models\Question::findOrFail($id);
+            $question->update([
+                'quiz_set_id' => $validated['quiz_set_id'],
+                'question_text' => trim($validated['question_text']),
+                'explanation' => $validated['explanation'] ?? null,
+                'is_pretest' => $validated['is_pretest'] ?? false,
             ]);
-        }
+
+            $question->answers()->delete();
+
+            foreach ($validated['answers'] as $ans) {
+                \App\Models\Answer::create([
+                    'question_id' => $question->id,
+                    'answer_text' => trim($ans['answer_text']),
+                    'is_correct' => $ans['is_correct'],
+                ]);
+            }
+
+            return $question->load('answers', 'quizSet.subject');
+        });
 
         return response()->json(['message' => 'Question updated successfully', 'question' => $question]);
     }
@@ -172,5 +176,44 @@ class AdminController extends Controller
         $question->delete();
 
         return response()->json(['message' => 'Question deleted successfully']);
+    }
+
+    private function validateQuestionPayload(Request $request): array
+    {
+        $validated = $request->validate([
+            'quiz_set_id' => 'required|exists:quiz_sets,id',
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'is_pretest' => 'boolean',
+            'answers' => 'required|array|size:4',
+            'answers.*.answer_text' => 'required|string',
+            'answers.*.is_correct' => 'required|boolean',
+        ], [
+            'answers.size' => 'A question must have exactly 4 answer choices.',
+        ]);
+
+        if (trim($validated['question_text']) === '') {
+            throw ValidationException::withMessages([
+                'question_text' => ['Question text cannot be blank.'],
+            ]);
+        }
+
+        foreach ($validated['answers'] as $index => $answer) {
+            if (trim($answer['answer_text']) === '') {
+                throw ValidationException::withMessages([
+                    "answers.$index.answer_text" => ['Answer choices cannot be blank.'],
+                ]);
+            }
+        }
+
+        $correctCount = collect($validated['answers'])->where('is_correct', true)->count();
+
+        if ($correctCount !== 1) {
+            throw ValidationException::withMessages([
+                'answers' => ['A question must have exactly 1 correct answer.'],
+            ]);
+        }
+
+        return $validated;
     }
 }

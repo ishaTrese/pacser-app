@@ -14,6 +14,7 @@ export default function AdminQuestionForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [quizSets, setQuizSets] = useState([]);
+  const [validationErrors, setValidationErrors] = useState([]);
   
   const [form, setForm] = useState({
     quiz_set_id: '',
@@ -22,6 +23,8 @@ export default function AdminQuestionForm() {
     is_pretest: false,
     answers: [
       { answer_text: '', is_correct: true },
+      { answer_text: '', is_correct: false },
+      { answer_text: '', is_correct: false },
       { answer_text: '', is_correct: false },
     ]
   });
@@ -38,8 +41,8 @@ export default function AdminQuestionForm() {
         setQuizSets(quizSetsRes.data.quiz_sets);
 
         if (!isNew) {
-          const res = await api.get('/admin/questions');
-          const q = res.data.questions.find(q => q.id.toString() === id);
+          const res = await api.get(`/admin/questions/${id}`);
+          const q = res.data.question;
           if (q) {
             setForm({
               quiz_set_id: q.quiz_set_id,
@@ -60,8 +63,49 @@ export default function AdminQuestionForm() {
     fetchFormData();
   }, [id, user, navigate, isNew]);
 
+  const validateForm = () => {
+    const errors = [];
+
+    if (!form.quiz_set_id) {
+      errors.push('Select a quiz set.');
+    }
+
+    if (!form.question_text.trim()) {
+      errors.push('Question text cannot be blank.');
+    }
+
+    if (form.answers.length !== 4) {
+      errors.push('A question must have exactly 4 answer choices.');
+    }
+
+    if (form.answers.some(answer => !answer.answer_text.trim())) {
+      errors.push('Answer choices cannot be blank.');
+    }
+
+    const correctCount = form.answers.filter(answer => answer.is_correct).length;
+    if (correctCount !== 1) {
+      errors.push('Select exactly 1 correct answer.');
+    }
+
+    return errors;
+  };
+
+  const backendValidationMessages = (err) => {
+    const errors = err.response?.data?.errors;
+    if (!errors) return [];
+
+    return Object.values(errors).flat();
+  };
+
   const handleSave = async () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
     setSaving(true);
+    setValidationErrors([]);
     try {
       if (isNew) {
         await api.post('/admin/questions', form);
@@ -71,7 +115,8 @@ export default function AdminQuestionForm() {
       navigate('/admin');
     } catch (err) {
       console.error(err);
-      alert('Failed to save question. Make sure a quiz set is selected and all required fields are filled.');
+      const messages = backendValidationMessages(err);
+      setValidationErrors(messages.length > 0 ? messages : ['Failed to save question. Check the required fields and try again.']);
     } finally {
       setSaving(false);
     }
@@ -113,6 +158,17 @@ export default function AdminQuestionForm() {
           </div>
 
           <div className="p-8 space-y-6">
+            {validationErrors.length > 0 && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <p className="font-bold mb-2">Please fix the following:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={`${error}-${index}`}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Quiz Set</label>
@@ -168,7 +224,8 @@ export default function AdminQuestionForm() {
                 <h3 className="text-lg font-bold text-slate-900">Answers</h3>
                 <button 
                   onClick={() => setForm({...form, answers: [...form.answers, { answer_text: '', is_correct: false }]})}
-                  className="text-blue-600 hover:bg-blue-50 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm transition-colors"
+                  disabled={form.answers.length >= 4}
+                  className="text-blue-600 hover:bg-blue-50 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={16} /> Add Answer
                 </button>
@@ -200,12 +257,13 @@ export default function AdminQuestionForm() {
                     />
                     <button 
                       onClick={() => {
-                        if (form.answers.length > 2) {
+                        if (form.answers.length > 4) {
                           const newAns = form.answers.filter((_, i) => i !== idx);
                           setForm({...form, answers: newAns});
                         }
                       }}
-                      className="text-slate-400 hover:text-red-500 transition-colors p-2"
+                      disabled={form.answers.length <= 4}
+                      className="text-slate-400 hover:text-red-500 transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-slate-400"
                       title="Remove answer"
                     >
                       <Trash2 size={18} />
