@@ -122,7 +122,7 @@ export default function AdminQuestionForm() {
     }
   };
 
-  if (loading) return <div className="p-10">Loading...</div>;
+  if (loading) return <div className="p-6 sm:p-10">Loading...</div>;
 
   if (user?.role !== 'admin') {
     return (
@@ -138,26 +138,26 @@ export default function AdminQuestionForm() {
     <div className="min-h-screen bg-slate-50 font-sans pb-12">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Link to="/admin" className="text-slate-500 hover:text-blue-600 font-bold flex items-center gap-2 mb-6">
           <ArrowLeft size={18} /> Back to Dashboard
         </Link>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               {isNew ? 'Create New Question' : `Edit Question #${id}`}
             </h1>
             <button 
               onClick={handleSave}
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg flex items-center gap-2 transition-colors shadow-md disabled:opacity-50"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-50"
             >
               <Save size={18} /> {saving ? 'Saving...' : 'Save Question'}
             </button>
           </div>
 
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-8 space-y-6">
             {validationErrors.length > 0 && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 <p className="font-bold mb-2">Please fix the following:</p>
@@ -169,7 +169,7 @@ export default function AdminQuestionForm() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Quiz Set</label>
                 <select
@@ -233,7 +233,7 @@ export default function AdminQuestionForm() {
               
               <div className="space-y-3">
                 {form.answers.map((ans, idx) => (
-                  <div key={idx} className={`flex items-center gap-4 p-3 rounded-xl border ${ans.is_correct ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
+                  <div key={idx} className={`flex flex-col min-[360px]:flex-row min-[360px]:items-center gap-3 sm:gap-4 p-3 rounded-xl border ${ans.is_correct ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
                     <input 
                       type="radio" 
                       name="correct_answer"
@@ -252,7 +252,7 @@ export default function AdminQuestionForm() {
                         newAns[idx].answer_text = e.target.value;
                         setForm({...form, answers: newAns});
                       }}
-                      className="flex-1 bg-white border border-slate-300 rounded-lg p-2 outline-none focus:border-blue-500"
+                      className="w-full min-[360px]:flex-1 bg-white border border-slate-300 rounded-lg p-2 outline-none focus:border-blue-500"
                       placeholder={`Answer option ${idx + 1}`}
                     />
                     <button 

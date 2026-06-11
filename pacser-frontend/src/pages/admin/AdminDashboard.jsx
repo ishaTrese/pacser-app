@@ -484,7 +484,7 @@ export default function AdminDashboard() {
     return 'bg-green-100 text-green-700';
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-50 p-10">Loading Admin...</div>;
+  if (loading) return <div className="min-h-screen bg-slate-50 p-6 sm:p-10">Loading Admin...</div>;
 
   if (user?.role !== 'admin') {
     return (
@@ -500,10 +500,10 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-50 font-sans">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-8">Admin Dashboard</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-6 sm:mb-8">Admin Dashboard</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
             <div className="bg-blue-100 p-3 rounded-xl"><Users className="text-blue-600" /></div>
             <div>
@@ -527,10 +527,10 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab('questions')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors whitespace-nowrap ${
               activeTab === 'questions'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
@@ -540,7 +540,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('quiz_sets')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors whitespace-nowrap ${
               activeTab === 'quiz_sets'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
@@ -550,7 +550,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('import_export')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors whitespace-nowrap ${
               activeTab === 'import_export'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
@@ -560,7 +560,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('access_codes')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors whitespace-nowrap ${
               activeTab === 'access_codes'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
             )}
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[860px] text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
                     <th className="p-4">ID</th>
@@ -862,7 +862,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[760px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
                       <th className="p-4">Subject</th>
@@ -1170,7 +1170,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[860px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-100 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
                       <th className="p-4">Code</th>

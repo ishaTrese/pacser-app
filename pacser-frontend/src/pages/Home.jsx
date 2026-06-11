@@ -90,7 +90,7 @@ export default function Home() {
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section 
-        className="relative h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+        className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-4 py-8 sm:py-10 overflow-hidden"
         style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30H0V0h30v30z' fill='none'/%3E%3Cpath d='M30 1H0V0h30v1zM1 30V0H0v30h1z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E\")" }}
       >
         {/* Floating Background Icons */}
@@ -98,8 +98,8 @@ export default function Home() {
         <div className="absolute bottom-[15%] right-[25%] opacity-[0.03] text-blue-600 rotate-12"><Shield size={120} /></div>
         <div className="absolute top-[40%] right-[35%] opacity-[0.03] text-blue-600 rotate-45"><Star size={60} /></div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full py-8">
-          <span className="inline-block mt-8 mb-4 px-4 py-1.5 rounded-full border border-blue-600/50 bg-blue-600/10 text-blue-600 text-xs font-bold tracking-widest uppercase">
+          <div className="relative z-10 flex flex-col items-center justify-center w-full h-full py-4 sm:py-8">
+          <span className="inline-block mt-2 sm:mt-8 mb-4 px-4 py-1.5 rounded-full border border-blue-600/50 bg-blue-600/10 text-blue-600 text-xs font-bold tracking-widest uppercase">
             {user ? 'Welcome Back' : 'Gamified CSE Reviewer'}
           </span>
 
@@ -130,7 +130,7 @@ export default function Home() {
             {/* Professional Card */}
             <button
               onClick={() => handleCategory('Professional')}
-              className="group flex-1 bg-gradient-to-b from-[#111827] to-[#0b0f17] border-2 border-blue-600 text-slate-900 p-6 rounded-3xl hover:-translate-y-1 hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 flex flex-col items-center gap-2 relative overflow-hidden"
+              className="group flex-1 bg-gradient-to-b from-[#111827] to-[#0b0f17] border-2 border-blue-600 text-slate-900 p-5 sm:p-6 rounded-3xl sm:hover:-translate-y-1 sm:hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 flex flex-col items-center gap-2 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               
@@ -145,7 +145,7 @@ export default function Home() {
               </div>
 
               {/* Hover Details View */}
-              <div className="absolute inset-0 flex flex-col justify-center items-start p-8 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 bg-[#0b0f17]/95 backdrop-blur-sm text-left">
+              <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-start p-8 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 bg-[#0b0f17]/95 backdrop-blur-sm text-left">
                 <span className="font-extrabold text-xl text-blue-500 mb-3 border-b border-blue-900 pb-2 w-full">Professional Coverage:</span>
                 <ul className="text-slate-300 text-xs space-y-2 font-medium">
                   <li>• Vocabulary & Grammar</li>
@@ -163,7 +163,7 @@ export default function Home() {
             {/* Sub-Professional Card */}
             <button
               onClick={() => handleCategory('Sub-Professional')}
-              className="group flex-1 bg-gradient-to-b from-[#111827] to-[#0b0f17] border-2 border-slate-700 hover:border-blue-600/70 text-slate-900 p-6 rounded-3xl hover:-translate-y-1 hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 flex flex-col items-center gap-2 relative overflow-hidden"
+              className="group flex-1 bg-gradient-to-b from-[#111827] to-[#0b0f17] border-2 border-slate-700 hover:border-blue-600/70 text-slate-900 p-5 sm:p-6 rounded-3xl sm:hover:-translate-y-1 sm:hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 flex flex-col items-center gap-2 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-slate-800/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               
@@ -178,7 +178,7 @@ export default function Home() {
               </div>
 
               {/* Hover Details View */}
-              <div className="absolute inset-0 flex flex-col justify-center items-start p-8 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 bg-[#0b0f17]/95 backdrop-blur-sm text-left">
+              <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-start p-8 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 bg-[#0b0f17]/95 backdrop-blur-sm text-left">
                 <span className="font-extrabold text-xl text-blue-500 mb-3 border-b border-blue-900 pb-2 w-full">Sub-Professional Coverage:</span>
                 <ul className="text-slate-300 text-xs space-y-2 font-medium">
                   <li>• Vocabulary & Grammar</li>

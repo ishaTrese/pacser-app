@@ -44,15 +44,15 @@ export default function Notifications() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans transition-colors">
       <Navbar />
 
-      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-6 py-8">
-        <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-6 flex flex-col min-[360px]:flex-row min-[360px]:justify-between min-[360px]:items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
             <Bell className="text-blue-600 dark:text-blue-400" size={28} />
             Notifications
           </h1>
           <button
             onClick={markAllAsRead}
-            className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors text-left min-[360px]:text-right"
           >
             Mark all as read
           </button>
@@ -67,7 +67,7 @@ export default function Notifications() {
             {notifications.map(notif => (
               <div
                 key={notif.id}
-                className={`p-5 rounded-xl border flex items-start gap-4 transition-colors ${
+                className={`p-4 sm:p-5 rounded-xl border flex items-start gap-3 sm:gap-4 transition-colors ${
                   notif.is_read
                     ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-75'
                     : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 shadow-sm'

@@ -113,7 +113,7 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans transition-colors">
       <Navbar />
 
-      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
+      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -134,10 +134,10 @@ export default function Leaderboard() {
           </button>
         </div>
 
-        <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-lg w-fit">
+        <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
           <button
             onClick={() => setActiveTab('Weekly')}
-            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
               activeTab === 'Weekly'
                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -147,7 +147,7 @@ export default function Leaderboard() {
           </button>
           <button
             onClick={() => setActiveTab('All Time')}
-            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
               activeTab === 'All Time'
                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -178,7 +178,7 @@ export default function Leaderboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
                 <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 px-3 py-3">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Position</p>
                   <p className="text-lg font-black text-slate-900 dark:text-white">
@@ -256,10 +256,10 @@ export default function Leaderboard() {
               <div className="flex flex-col">
 
                 {/* Podium for Top 3 */}
-                <div className="flex justify-center items-end gap-2 sm:gap-6 pt-12 pb-8 px-4 bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900/50 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex justify-center items-end gap-1 sm:gap-6 pt-8 sm:pt-12 pb-6 sm:pb-8 px-2 sm:px-4 bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900/50 border-b border-slate-100 dark:border-slate-700 overflow-hidden">
                   {/* Rank 2 */}
                   {topThree[1] && (
-                    <div className={`flex flex-col items-center w-24 sm:w-32 rounded-xl p-2 ${topThree[1].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <div className={`flex flex-col items-center w-20 sm:w-32 rounded-xl p-1.5 sm:p-2 min-w-0 ${topThree[1].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                       <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 mb-2 border-2 border-slate-300 dark:border-slate-600">
                         {topThree[1].first_name[0]}{topThree[1].last_name[0]}
                       </div>
@@ -283,7 +283,7 @@ export default function Leaderboard() {
 
                   {/* Rank 1 */}
                   {topThree[0] && (
-                    <div className={`flex flex-col items-center w-28 sm:w-36 z-10 rounded-xl p-2 ${topThree[0].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <div className={`flex flex-col items-center w-24 sm:w-36 z-10 rounded-xl p-1.5 sm:p-2 min-w-0 ${topThree[0].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                       <Trophy size={28} className="text-yellow-500 mb-2 fill-current drop-shadow-md" />
                       <div className="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center font-bold text-yellow-700 dark:text-yellow-500 mb-2 border-4 border-yellow-400 dark:border-yellow-600 shadow-lg">
                         {topThree[0].first_name[0]}{topThree[0].last_name[0]}
@@ -308,7 +308,7 @@ export default function Leaderboard() {
 
                   {/* Rank 3 */}
                   {topThree[2] && (
-                    <div className={`flex flex-col items-center w-24 sm:w-32 rounded-xl p-2 ${topThree[2].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <div className={`flex flex-col items-center w-20 sm:w-32 rounded-xl p-1.5 sm:p-2 min-w-0 ${topThree[2].id === user?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                       <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center font-bold text-orange-800 dark:text-orange-500 mb-2 border-2 border-orange-300 dark:border-orange-700">
                         {topThree[2].first_name[0]}{topThree[2].last_name[0]}
                       </div>
@@ -393,7 +393,7 @@ export default function Leaderboard() {
           </div>
 
           {/* Current User Sticky Footer */}
-          <div className="bg-slate-900 p-4 sm:px-6 flex items-center justify-between border-t border-slate-800">
+          <div className="bg-slate-900 p-4 sm:px-6 flex flex-col min-[360px]:flex-row min-[360px]:items-center justify-between gap-3 border-t border-slate-800">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold border border-slate-700">
                 {CURRENT_USER.rank === '-' ? '-' : `#${CURRENT_USER.rank}`}

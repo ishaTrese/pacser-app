@@ -16,7 +16,7 @@ export default function Learn() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
         <Navbar />
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="mb-8 mt-2">
             <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
               Choose Your Reviewer Category
@@ -26,9 +26,9 @@ export default function Learn() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-700/50">
                   <Compass size={28} className="text-blue-600 dark:text-blue-400" />
                 </div>
@@ -75,7 +75,7 @@ export default function Learn() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center flex-wrap">
               Select a Subject
               <CategoryBadge />
             </h1>
@@ -103,7 +103,7 @@ export default function Learn() {
               <div 
                 key={subject.id}
                 onClick={() => navigate(`/learn/${subject.id}`)}
-                className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
               >
                 <div className={`w-16 h-16 rounded-2xl ${subject.color} dark:${darkColor} ${subject.borderColor} dark:${darkBorderColor} border flex items-center justify-center mb-6 shadow-sm`}>
                   <Icon size={32} className={subject.iconClass} />
@@ -116,7 +116,7 @@ export default function Learn() {
                   {subject.description}
                 </p>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
                   <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl px-3 py-2 border border-slate-100 dark:border-slate-700">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Progress</p>
                     <p className="text-sm font-black text-slate-700 dark:text-slate-200">Ready</p>

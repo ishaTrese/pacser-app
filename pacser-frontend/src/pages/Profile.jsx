@@ -231,10 +231,10 @@ export default function Profile() {
 
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 flex flex-col font-sans transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans transition-colors">
       <Navbar />
 
-      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-6 py-5 overflow-hidden">
+      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 sm:px-6 py-5">
 
         {/* Header Section */}
         <div className="mb-5 shrink-0">
@@ -249,7 +249,7 @@ export default function Profile() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
 
           {/* LEFT: Identity Card (4/12) */}
-          <div className="lg:col-span-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-6 shadow-xl flex flex-col items-center transition-colors">
+          <div className="lg:col-span-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col items-center transition-colors">
             <div className="w-28 h-28 rounded-full bg-slate-700 dark:bg-slate-900 flex items-center justify-center border-4 border-blue-600 dark:border-blue-500 shadow-[0_0_15px_rgba(251,191,36,0.3)] mb-4 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-slate-400 dark:text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
             </div>
@@ -279,12 +279,12 @@ export default function Profile() {
           <div className="lg:col-span-8 flex flex-col min-h-0">
 
             {/* Tabs Header */}
-            <div className="flex gap-6 border-b border-slate-200 dark:border-slate-700 mb-5 shrink-0 transition-colors">
+            <div className="flex gap-3 sm:gap-6 border-b border-slate-200 dark:border-slate-700 mb-5 shrink-0 transition-colors overflow-x-auto pb-px">
               {['Overview', 'Mock Exams', 'Achievements', 'Account'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-2 text-sm font-bold transition-colors border-b-2 ${
+                  className={`pb-2 text-sm font-bold transition-colors border-b-2 whitespace-nowrap ${
                     activeTab === tab
                       ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
                       : 'text-slate-900 dark:text-slate-400 border-transparent hover:text-slate-500 dark:hover:text-slate-300'
@@ -296,11 +296,11 @@ export default function Profile() {
             </div>
 
             {/* Tabs Content */}
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-white dark:[&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:bg-blue-600/50 hover:[&::-webkit-scrollbar-thumb]:bg-blue-600 [&::-webkit-scrollbar-thumb]:rounded-full pr-2">
+            <div className="flex-1 overflow-visible lg:overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-white dark:[&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:bg-blue-600/50 hover:[&::-webkit-scrollbar-thumb]:bg-blue-600 [&::-webkit-scrollbar-thumb]:rounded-full lg:pr-2">
 
               {activeTab === 'Overview' && (
                 <div className="flex flex-col gap-6">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 shadow-lg flex flex-col justify-center items-center text-center transition-colors">
                       <BookOpen size={24} className="text-blue-400 dark:text-blue-500 mb-3" />
                       <span className="text-slate-900 dark:text-white font-black text-2xl mb-1">{stats?.total_lessons || 0}</span>
@@ -343,7 +343,7 @@ export default function Profile() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-4">
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-5 gap-3">
                           {practiceStats.map((item) => (
                             <div key={item.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-100 dark:border-slate-700/50">
                               <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
@@ -565,7 +565,7 @@ export default function Profile() {
                       <Award size={20} className="text-yellow-500" />
                       Badges
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 place-items-center">
+                    <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-4 gap-6 place-items-center">
                       {badges.map((badge, idx) => {
                         const Icon = badgeIcons[idx];
                         const colorObj = badgeColors[idx];
@@ -773,7 +773,7 @@ export default function Profile() {
                       Inventory & Perks
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 mb-4">
                       {inventoryItems.map((item) => (
                         <div key={item.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
                           <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">

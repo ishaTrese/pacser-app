@@ -155,7 +155,7 @@ export default function SubjectQuiz() {
       <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
         <Navbar />
         <div className="flex flex-1 items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center shadow-lg">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-lg">
             <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Zap size={32} className="text-yellow-500 fill-current" />
             </div>
@@ -241,7 +241,7 @@ export default function SubjectQuiz() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans pb-12 transition-colors">
       <Navbar />
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
         
         <Breadcrumb items={[
           { label: 'Learn', path: '/learn' },
@@ -251,7 +251,7 @@ export default function SubjectQuiz() {
 
         {/* Quiz Header with Energy */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {quizSet?.name || quizTitle}
           </h1>
           
@@ -281,7 +281,7 @@ export default function SubjectQuiz() {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-2 font-bold tracking-tight">
             <span>Question {currentIndex + 1} of {questions.length}</span>
-            <span className="text-blue-600 dark:text-blue-400">Score: {score} XP</span>
+            <span className="text-blue-600 dark:text-blue-400">Score: {score}</span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
             <div 
@@ -292,14 +292,14 @@ export default function SubjectQuiz() {
         </div>
 
         {/* Question Card (Clean Light HCI) */}
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8 shadow-sm">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-8 leading-relaxed tracking-tight">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-6 sm:mb-8 leading-relaxed tracking-tight">
             {currentQuestion.question_text}
           </h2>
 
           <div className="space-y-3">
             {currentQuestion.options.map((option, idx) => {
-              let btnClass = "w-full flex items-center p-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 ";
+              let btnClass = "w-full flex items-start sm:items-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 ";
               let icon = null;
               
               if (!isSubmitted) {
@@ -325,7 +325,7 @@ export default function SubjectQuiz() {
                   disabled={isSubmitted || timerExpired || submitting}
                   className={btnClass}
                 >
-                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black mr-4 text-sm ${
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black mr-3 sm:mr-4 text-sm shrink-0 ${
                     !isSubmitted && selectedOption === option.id ? 'bg-blue-600 text-white' : 
                     isSubmitted && option.id === currentQuestion.correct_answer ? 'bg-blue-500 text-white' :
                     isSubmitted && selectedOption === option.id ? 'bg-yellow-500 text-white' :
@@ -333,7 +333,7 @@ export default function SubjectQuiz() {
                   }`}>
                     {optionLetters[idx] || '?'}
                   </span>
-                  <span className="font-semibold text-left">{option.text}</span>
+                  <span className="font-semibold text-left min-w-0 break-words">{option.text}</span>
                   {icon}
                 </button>
               );
@@ -342,7 +342,7 @@ export default function SubjectQuiz() {
 
           {/* Instant Rationale Channel */}
           {isSubmitted && (
-            <div className="mt-8 p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mt-6 sm:mt-8 p-4 sm:p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h3 className="font-black text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2 text-lg tracking-tight">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
                 Explanation
@@ -351,12 +351,12 @@ export default function SubjectQuiz() {
             </div>
           )}
 
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex justify-stretch sm:justify-end">
             {!isSubmitted ? (
               <button 
                 onClick={handleSubmit}
                 disabled={!selectedOption || timerExpired || submitting}
-                className={`px-8 py-3.5 rounded-xl font-bold transition-all text-sm shadow-sm ${
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold transition-all text-sm shadow-sm ${
                   selectedOption && !timerExpired && !submitting
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20' 
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -368,7 +368,7 @@ export default function SubjectQuiz() {
               <button 
                 onClick={handleNext}
                 disabled={timerExpired || submitting}
-                className="px-8 py-3.5 rounded-xl font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 shadow-md text-sm transition-colors flex items-center gap-2"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 shadow-md text-sm transition-colors flex items-center justify-center gap-2"
               >
                 {submitting ? 'Submitting...' : currentIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>

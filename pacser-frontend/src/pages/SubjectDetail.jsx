@@ -69,7 +69,7 @@ export default function SubjectDetail() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
         <Breadcrumb items={[
           { label: 'Learn', path: '/learn' },
@@ -79,7 +79,7 @@ export default function SubjectDetail() {
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize mb-2 flex items-center flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize mb-2 flex items-center flex-wrap">
               {subjectId.replace(/-/g, ' ')}
               <CategoryBadge />
             </h1>
@@ -112,11 +112,11 @@ export default function SubjectDetail() {
             quizSets.map((set) => (
               <div
                 key={set.id}
-                className={`bg-white dark:bg-slate-800 border rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-200 shadow-sm ${
+                className={`bg-white dark:bg-slate-800 border rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-200 shadow-sm ${
                   set.status === 'locked' ? 'border-slate-200 dark:border-slate-700/50 opacity-75 bg-slate-50 dark:bg-slate-800/50' : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
                 }`}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                   <div className={`p-3 rounded-xl flex items-center justify-center shadow-sm ${
                     set.status === 'completed' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
                     set.status === 'locked' ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400' :
@@ -127,11 +127,11 @@ export default function SubjectDetail() {
                      <PlayCircle size={24} />}
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <h3 className={`font-bold text-lg tracking-tight ${set.status === 'locked' ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
                       {set.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
                       <span className="flex items-center gap-1"><BookOpen size={14} /> {set.questions} Questions</span>
                       <span className="flex items-center gap-1"><Clock size={14} /> {set.time}</span>
                     </div>

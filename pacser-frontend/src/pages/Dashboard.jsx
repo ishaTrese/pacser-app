@@ -731,7 +731,7 @@ export default function Dashboard() {
                   <ChevronRight size={15} className="transition-transform group-open:rotate-90" />
                 </summary>
                 <div className="px-3 pb-3">
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-1.5 sm:gap-2">
                     <div className={cardInset}>
                       <p className={sectionEyebrow}>Subject Mastery</p>
                       <p className="text-slate-900 dark:text-white font-bold text-base mt-0.5">{Math.round(averageMastery)}%</p>

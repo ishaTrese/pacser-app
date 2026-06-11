@@ -118,7 +118,7 @@ export default function Shop() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col font-sans transition-colors">
       <Navbar />
 
-      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-6 py-6">
+      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         
         {/* Header */}
         <div className="mb-8 mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -143,7 +143,7 @@ export default function Shop() {
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="mb-6 grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             ['Energy +1', user?.inventory_energy_plus_one || 0],
             ['Energy Refill', user?.inventory_energy_refills || 0],
@@ -180,12 +180,12 @@ export default function Shop() {
 
 
           {/* Shop Tabs */}
-          <div className="flex gap-8 border-b border-slate-200 dark:border-slate-700 mb-6 shrink-0">
+          <div className="flex gap-4 sm:gap-8 border-b border-slate-200 dark:border-slate-700 mb-6 shrink-0 overflow-x-auto">
             {['Perks', 'Books'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-lg font-bold transition-colors border-b-2 ${
+                className={`pb-3 text-base sm:text-lg font-bold transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === tab 
                     ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400' 
                     : 'text-slate-900 dark:text-slate-400 border-transparent hover:text-slate-500 dark:hover:text-slate-300'
@@ -208,7 +208,7 @@ export default function Shop() {
                   const activationState = getActivationState(perk.id, ownedCount);
 
                   return (
-                    <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-5 flex flex-col shadow-lg transition-transform hover:-translate-y-1 relative">
+                    <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl p-4 sm:p-5 flex flex-col shadow-lg transition-transform hover:-translate-y-1 relative">
                       {ownedCount > 0 && (
                         <div className="absolute -top-3 -right-3 bg-green-500 text-white font-black text-xs px-3 py-1 rounded-full shadow-md border-2 border-white dark:border-slate-800 z-10">
                           Owned: {ownedCount}
@@ -304,7 +304,7 @@ export default function Shop() {
       {/* Custom Modal */}
       {modalMessage && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center transform scale-100 transition-transform">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center transform scale-100 transition-transform">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
             </div>
